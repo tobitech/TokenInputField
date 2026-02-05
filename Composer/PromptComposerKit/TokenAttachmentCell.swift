@@ -1,11 +1,14 @@
 import AppKit
 
 final class TokenAttachmentCell: NSTextAttachmentCell {
-	static let defaultHorizontalPadding: CGFloat = 6
-	static let defaultVerticalPadding: CGFloat = 2
-	static let defaultCornerRadius: CGFloat = 6
+	nonisolated static let defaultHorizontalPadding: CGFloat = 6
+	nonisolated static let defaultVerticalPadding: CGFloat = 2
+	nonisolated static let defaultCornerRadius: CGFloat = 6
 
-	static func lineHeight(for font: NSFont, verticalPadding: CGFloat = defaultVerticalPadding) -> CGFloat {
+	nonisolated static func lineHeight(
+		for font: NSFont,
+		verticalPadding: CGFloat = defaultVerticalPadding
+	) -> CGFloat {
 		let textHeight = ceil(font.ascender - font.descender)
 		return textHeight + (verticalPadding * 2)
 	}
