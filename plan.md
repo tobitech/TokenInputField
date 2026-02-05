@@ -31,7 +31,7 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
   - Render via custom `NSTextAttachmentCell` (pill style).
   - Done when: programmatic tokens render as inline pills.
 
-- [ ] Step 5 — Atomic token behavior
+- [x] Step 5 — Atomic token behavior ✅
   - Intercept edits to delete tokens as a unit.
   - Prevent partial selection inside tokens.
   - Done when: backspace removes a whole token; arrows don’t “enter” tokens.

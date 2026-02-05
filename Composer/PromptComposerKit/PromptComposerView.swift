@@ -104,5 +104,22 @@ public struct PromptComposerView: NSViewRepresentable {
 
 			parent.state.selectedRange = tv.selectedRange()
 		}
+
+		public func textView(
+			_ textView: NSTextView,
+			willChangeSelectionFromCharacterRange oldSelectedCharRange: NSRange,
+			toCharacterRange newSelectedCharRange: NSRange
+		) -> NSRange {
+			guard !isApplyingSwiftUIUpdate,
+				let promptTextView = textView as? PromptComposerTextView
+			else {
+				return newSelectedCharRange
+			}
+
+			return promptTextView.adjustedSelectionRange(
+				from: oldSelectedCharRange,
+				to: newSelectedCharRange
+			)
+		}
 	}
 }
