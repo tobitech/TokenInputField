@@ -12,7 +12,11 @@ public struct PromptComposerView: NSViewRepresentable {
 	@Binding private var state: PromptComposerState
 	private let config: PromptComposerConfig
 
-	public init(state: Binding<PromptComposerState>, config: PromptComposerConfig = .init()) {
+	public init(state: Binding<PromptComposerState>) {
+		self.init(state: state, config: PromptComposerConfig())
+	}
+
+	public init(state: Binding<PromptComposerState>, config: PromptComposerConfig) {
 		self._state = state
 		self.config = config
 	}

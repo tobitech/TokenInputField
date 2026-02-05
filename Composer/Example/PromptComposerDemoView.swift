@@ -1,8 +1,9 @@
+import AppKit
 import SwiftUI
 
 struct PromptComposerDemoView: View {
 	@State private var state = PromptComposerState(
-		attributedText: NSAttributedString(string: "Type here… Try multi-line. (Step 1)"),
+		attributedText: PromptComposerDemoView.sampleAttributedText(),
 		selectedRange: NSRange(location: 0, length: 0)
 	)
 
@@ -29,6 +30,23 @@ struct PromptComposerDemoView: View {
 				.frame(maxWidth: .infinity, alignment: .leading)
 		}
 		.padding()
+	}
+
+	private static func sampleAttributedText() -> NSAttributedString {
+		let document = PromptDocument(segments: [
+			.text("Send a reminder to "),
+			.token(Token(kind: .variable, display: "team", metadata: ["key": "recipient"])),
+			.text(" about "),
+			.token(Token(kind: .fileMention, display: "Budget.xlsx", metadata: ["id": "file-1"])),
+			.text(" tomorrow.")
+		])
+		return document.buildAttributedString(
+			baseAttributes: [
+				.font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
+				.foregroundColor: NSColor.labelColor
+			],
+			usesAttachments: true
+		)
 	}
 }
 
