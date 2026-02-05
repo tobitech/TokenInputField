@@ -25,6 +25,13 @@ struct PromptComposerDemoView: View {
 					c.minVisibleLines = 1
 					c.maxVisibleLines = 10
 					c.growthDirection = .up
+					c.suggestionsProvider = { context in
+						let shouldShow = context.text.contains("@") || context.text.contains("/")
+						return shouldShow ? PromptComposerDemoView.sampleSuggestions() : []
+					}
+					c.onSuggestionSelected = { suggestion in
+						print("Selected suggestion: \(suggestion.title)")
+					}
 					c.onSubmit = {
 						// In Step 1 we just print; later we’ll expose a structured document model.
 						print("Submit: \(state.attributedText.string)")
@@ -53,12 +60,17 @@ struct PromptComposerDemoView: View {
 			usesAttachments: true
 		)
 	}
-}
 
-#if DEBUG
-struct PromptComposerDemoView_Previews: PreviewProvider {
-	static var previews: some View {
-		PromptComposerDemoView()
+	private static func sampleSuggestions() -> [PromptSuggestion] {
+		[
+			PromptSuggestion(title: "team", subtitle: "Variable", kind: .variable),
+			PromptSuggestion(title: "Budget.xlsx", subtitle: "File mention", kind: .fileMention),
+			PromptSuggestion(title: "Schedule Review", subtitle: "Command", kind: .command),
+			PromptSuggestion(title: "Quarterly Report.pdf", subtitle: "File mention", kind: .fileMention)
+		]
 	}
 }
-#endif
+
+#Preview {
+	PromptComposerDemoView()
+}

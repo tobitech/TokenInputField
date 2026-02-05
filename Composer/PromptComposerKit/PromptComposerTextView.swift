@@ -5,6 +5,8 @@ final class PromptComposerTextView: NSTextView {
 	var config: PromptComposerConfig = .init() {
 		didSet { applyConfig() }
 	}
+	
+	var suggestionController: PromptSuggestionPopoverController?
 
 	override init(frame frameRect: NSRect, textContainer container: NSTextContainer?) {
 		if let container {
@@ -80,6 +82,10 @@ final class PromptComposerTextView: NSTextView {
 	}
 	
 	override func keyDown(with event: NSEvent) {
+		if suggestionController?.handleKeyDown(event) == true {
+			return
+		}
+
 		if config.submitsOnEnter,
 			 event.keyCode == 36 /* Return */ || event.keyCode == 76 /* Numpad Enter */ {
 				 // Shift-Enter should insert a newline.
@@ -93,6 +99,24 @@ final class PromptComposerTextView: NSTextView {
 		}
 		
 		super.keyDown(with: event)
+	}
+
+	func suggestionAnchorRect() -> NSRect? {
+		guard let window else { return nil }
+
+		let length = string.utf16.count
+		let location = min(max(0, selectedRange().location), length)
+		let caretRange = NSRange(location: location, length: 0)
+		let screenRect = firstRect(forCharacterRange: caretRange, actualRange: nil)
+		let windowRect = window.convertFromScreen(screenRect)
+		let viewRect = convert(windowRect, from: nil).standardized
+
+		return NSRect(
+			x: viewRect.origin.x,
+			y: viewRect.origin.y,
+			width: max(1, viewRect.size.width),
+			height: max(1, viewRect.size.height)
+		)
 	}
 
 	// MARK: - Token editing

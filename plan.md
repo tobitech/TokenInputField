@@ -38,7 +38,7 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
 
 ## Phase 2 — Suggestions + triggers
 
-- [ ] Step 6 — Suggestion popover shell
+- [x] Step 6 — Suggestion popover shell ✅
   - Build a reusable popover/panel with keyboard navigation.
   - Anchor to caret rect.
   - Done when: popover shows at caret with dummy data.

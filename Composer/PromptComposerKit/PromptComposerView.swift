@@ -29,6 +29,8 @@ public struct PromptComposerView: NSViewRepresentable {
 		let textView = PromptComposerTextView()
 		textView.config = config
 		textView.delegate = context.coordinator
+		textView.suggestionController = context.coordinator.suggestionController
+		context.coordinator.suggestionController.textView = textView
 
 		// Initial content
 		textView.textStorage?.setAttributedString(state.attributedText)
@@ -79,6 +81,7 @@ public struct PromptComposerView: NSViewRepresentable {
 		fileprivate let parent: PromptComposerView
 		fileprivate weak var textView: NSTextView?
 		fileprivate weak var scrollView: PromptComposerScrollView?
+		fileprivate let suggestionController = PromptSuggestionPopoverController()
 
 		fileprivate var isApplyingSwiftUIUpdate = false
 
@@ -95,6 +98,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			parent.state.attributedText = tv.attributedString()
 			parent.state.selectedRange = tv.selectedRange()
 			scrollView?.updateHeight()
+			updateSuggestions(for: tv)
 		}
 
 		public func textViewDidChangeSelection(_ notification: Notification) {
@@ -103,6 +107,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			else { return }
 
 			parent.state.selectedRange = tv.selectedRange()
+			suggestionController.updateAnchor()
 		}
 
 		public func textView(
@@ -120,6 +125,24 @@ public struct PromptComposerView: NSViewRepresentable {
 				from: oldSelectedCharRange,
 				to: newSelectedCharRange
 			)
+		}
+
+		private func updateSuggestions(for textView: NSTextView) {
+			guard let promptTextView = textView as? PromptComposerTextView else {
+				return
+			}
+
+			guard let provider = promptTextView.config.suggestionsProvider else {
+				suggestionController.update(items: [])
+				return
+			}
+
+			let context = PromptSuggestionContext(
+				text: promptTextView.string,
+				selectedRange: promptTextView.selectedRange()
+			)
+			let items = provider(context)
+			suggestionController.update(items: items)
 		}
 	}
 }

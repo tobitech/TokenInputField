@@ -41,6 +41,12 @@ public struct PromptComposerConfig {
 	public var onSubmit: (() -> Void)? = nil
 	
 	public var submitsOnEnter: Bool = false
+
+	/// Suggestion provider for the popover shell (Step 6).
+	public var suggestionsProvider: ((PromptSuggestionContext) -> [PromptSuggestion])? = nil
+
+	/// Called when a suggestion is selected.
+	public var onSuggestionSelected: ((PromptSuggestion) -> Void)? = nil
 	
 	public init() {}
 }
