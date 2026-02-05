@@ -65,7 +65,7 @@ public final class PromptComposerScrollView: NSScrollView {
 
 	func updateHeight() {
 		let font = textView.config.font
-		let lineHeight = ceil(font.ascender - font.descender + font.leading)
+		let lineHeight = TokenAttachmentCell.lineHeight(for: font)
 		let minLines = max(1, config.minVisibleLines)
 		let maxLines = max(minLines, config.maxVisibleLines)
 

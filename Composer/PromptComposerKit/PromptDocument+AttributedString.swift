@@ -42,6 +42,31 @@ public final class TokenAttachment: NSTextAttachment {
 		}
 		super.encode(with: coder)
 	}
+
+	public override func attachmentBounds(
+		for textContainer: NSTextContainer?,
+		proposedLineFragment lineFrag: CGRect,
+		glyphPosition position: CGPoint,
+		characterIndex charIndex: Int
+	) -> CGRect {
+		guard let cell = attachmentCell as? TokenAttachmentCell else {
+			return super.attachmentBounds(
+				for: textContainer,
+				proposedLineFragment: lineFrag,
+				glyphPosition: position,
+				characterIndex: charIndex
+			)
+		}
+
+		let size = cell.cellSize()
+		let baselineOffset = cell.cellBaselineOffset()
+		return CGRect(
+			x: baselineOffset.x,
+			y: baselineOffset.y,
+			width: size.width,
+			height: size.height
+		)
+	}
 }
 
 public extension PromptDocument {

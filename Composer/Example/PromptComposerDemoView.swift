@@ -55,6 +55,10 @@ struct PromptComposerDemoView: View {
 	}
 }
 
-#Preview {
-	PromptComposerDemoView()
+#if DEBUG
+struct PromptComposerDemoView_Previews: PreviewProvider {
+	static var previews: some View {
+		PromptComposerDemoView()
+	}
 }
+#endif

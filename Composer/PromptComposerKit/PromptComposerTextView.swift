@@ -50,10 +50,17 @@ final class PromptComposerTextView: NSTextView {
 
 		textContainerInset = config.textInsets
 
+		let paragraphStyle = NSMutableParagraphStyle()
+		let lineHeight = TokenAttachmentCell.lineHeight(for: config.font)
+		paragraphStyle.minimumLineHeight = lineHeight
+		paragraphStyle.maximumLineHeight = lineHeight
+		defaultParagraphStyle = paragraphStyle
+
 		// Default typing attributes.
 		typingAttributes = [
 			.font: config.font,
 			.foregroundColor: config.textColor,
+			.paragraphStyle: paragraphStyle,
 		]
 
 		textLayoutManager?.usesFontLeading = false
