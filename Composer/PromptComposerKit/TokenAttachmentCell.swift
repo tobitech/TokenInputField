@@ -1,6 +1,11 @@
 import AppKit
 
 final class TokenAttachmentCell: NSTextAttachmentCell {
+	private static let measurementLayoutManager = NSLayoutManager()
+	private static func textCenterOffset(for font: NSFont) -> CGFloat {
+		(font.ascender + font.descender) / 2
+	}
+
 	nonisolated let token: Token
 	nonisolated(unsafe) let tokenFont: NSFont
 	nonisolated let textColor: NSColor
@@ -15,7 +20,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		textColor: NSColor = .labelColor,
 		backgroundColor: NSColor = NSColor.controlAccentColor.withAlphaComponent(0.18),
 		horizontalPadding: CGFloat = 6,
-		verticalPadding: CGFloat = 1,
+		verticalPadding: CGFloat = 2,
 		cornerRadius: CGFloat = 6
 	) {
 		self.token = token
@@ -34,7 +39,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		self.textColor = .labelColor
 		self.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.18)
 		self.horizontalPadding = 6
-		self.verticalPadding = 2
+		self.verticalPadding = 0
 		self.cornerRadius = 6
 		super.init(coder: coder)
 	}
@@ -48,19 +53,45 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 			.font: tokenFont
 		]
 		let textSize = (displayText as NSString).size(withAttributes: attributes)
-		let lineHeight = ceil(tokenFont.ascender - tokenFont.descender)
+		let textHeight = ceil(tokenFont.ascender - tokenFont.descender)
+		let lineHeight = textHeight + (verticalPadding * 2)
 		let width = ceil(textSize.width + (horizontalPadding * 2))
-		let height = ceil(lineHeight + (verticalPadding * 2))
-		return NSSize(width: width, height: height)
+		return NSSize(width: width, height: lineHeight)
 	}
 
 	nonisolated override func cellBaselineOffset() -> NSPoint {
-		NSPoint(x: 0, y: verticalPadding + tokenFont.ascender)
+		NSPoint(x: 0, y: tokenFont.descender)
+	}
+
+	nonisolated override func cellFrame(
+		for textContainer: NSTextContainer,
+		proposedLineFragment lineFrag: NSRect,
+		glyphPosition position: NSPoint,
+		characterIndex charIndex: Int
+	) -> NSRect {
+		let size = cellSize()
+		let baselineY = position.y
+		let textCenterY = baselineY + Self.textCenterOffset(for: tokenFont)
+		var originY = textCenterY - (size.height / 2)
+		let minY = lineFrag.minY
+		let maxY = lineFrag.maxY - size.height
+		if originY < minY {
+			originY = minY
+		} else if originY > maxY {
+			originY = maxY
+		}
+		return NSRect(
+			x: position.x,
+			y: originY,
+			width: size.width,
+			height: size.height
+		)
 	}
 
 	nonisolated override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
+		let pillFrame = cellFrame.integral
 		let path = NSBezierPath(
-			roundedRect: cellFrame,
+			roundedRect: pillFrame,
 			xRadius: cornerRadius,
 			yRadius: cornerRadius
 		)
@@ -71,10 +102,10 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 			.font: tokenFont,
 			.foregroundColor: textColor
 		]
-		let baselineY = cellFrame.origin.y + cellBaselineOffset().y
+		let baselineY = cellFrame.midY - Self.textCenterOffset(for: tokenFont)
 		let textOrigin = NSPoint(
 			x: cellFrame.origin.x + horizontalPadding,
-			y: baselineY - tokenFont.ascender
+			y: baselineY
 		)
 		(displayText as NSString).draw(at: textOrigin, withAttributes: attributes)
 	}

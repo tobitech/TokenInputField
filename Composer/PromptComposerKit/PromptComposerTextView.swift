@@ -56,6 +56,9 @@ final class PromptComposerTextView: NSTextView {
 			.foregroundColor: config.textColor,
 		]
 
+		textLayoutManager?.usesFontLeading = false
+		layoutManager?.usesFontLeading = false
+
 		// Improve selection/caret behaviour in embedding contexts.
 		usesFindBar = false
 		isIncrementalSearchingEnabled = false

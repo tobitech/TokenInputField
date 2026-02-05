@@ -21,9 +21,9 @@ struct PromptComposerDemoView: View {
 				state: $state,
 				config: {
 					var c = PromptComposerConfig()
-					c.submitsOnEnter = true
+					c.submitsOnEnter = false
 					c.minVisibleLines = 1
-					c.maxVisibleLines = 15
+					c.maxVisibleLines = 10
 					c.growthDirection = .up
 					c.onSubmit = {
 						// In Step 1 we just print; later we’ll expose a structured document model.

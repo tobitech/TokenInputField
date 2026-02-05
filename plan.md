@@ -4,18 +4,18 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
 
 ## Phase 0 — Baseline wrapper + TextKit 2 setup
 
-- [ ] Step 1 — SwiftUI wrapper (NSViewRepresentable)
+- [x] Step 1 — SwiftUI wrapper (NSViewRepresentable) ✅
   - Build `PromptComposerView` and `PromptComposerScrollView`.
   - Host `PromptComposerTextView` inside the scroll view.
   - Bridge selection and text changes through a Coordinator.
   - Done when: view shows, accepts text input, and pushes updates to SwiftUI state.
 
-- [ ] Step 2 — Force TextKit 2 + baseline configuration
+- [x] Step 2 — Force TextKit 2 + baseline configuration ✅
   - Initialize the text view with the TextKit 2 initializer.
   - Configure typing attributes, rich text, insets, wrapping, and undo.
   - Done when: typing and wrapping are smooth and consistent.
 
-- [ ] Step 3 — Document model + conversion
+- [x] Step 3 — Document model + conversion ✅
   - Define `PromptDocument = [Segment]` with `text` and `token` cases.
   - Define `Token` with id, kind (variable/file/command), display, and metadata.
   - Implement:
@@ -25,7 +25,7 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
 
 ## Phase 1 — Tokens (fast rendering + atomic editing)
 
-- [ ] Step 4 — Attachment tokens (variable + file)
+- [x] Step 4 — Attachment tokens (variable + file) ✅
   - Create `TokenAttachment: NSTextAttachment` with metadata.
   - Insert tokens via `NSAttributedString(attachment:)`.
   - Render via custom `NSTextAttachmentCell` (pill style).
