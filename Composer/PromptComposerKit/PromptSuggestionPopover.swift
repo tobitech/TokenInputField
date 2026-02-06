@@ -102,6 +102,11 @@ struct PromptSuggestionSection: Identifiable {
 }
 
 struct PromptSuggestionListView: View {
+	private static let topScrollAnchorID = "prompt-suggestion-top-anchor"
+	private static let bottomScrollAnchorID = "prompt-suggestion-bottom-anchor"
+
+	@Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+
 	let model: PromptSuggestionViewModel
 	let onSelect: (PromptSuggestion) -> Void
 	let standardWidth: CGFloat
@@ -135,6 +140,10 @@ struct PromptSuggestionListView: View {
 		isCompact ? 8 : 10
 	}
 
+	private var suggestionScrollAnimation: Animation {
+		.easeOut(duration: 0.18)
+	}
+
 	private func select(_ indexed: PromptSuggestionIndexedItem) {
 		if model.selectedIndex != indexed.index {
 			model.selectedIndex = indexed.index
@@ -142,21 +151,59 @@ struct PromptSuggestionListView: View {
 		onSelect(indexed.item)
 	}
 
+	private func scrollToSelection(_ selectedIndex: Int, with scrollProxy: ScrollViewProxy) {
+		if selectedIndex == 0 {
+			scrollProxy.scrollTo(Self.topScrollAnchorID, anchor: .top)
+			return
+		}
+
+		if selectedIndex == model.items.count - 1 {
+			scrollProxy.scrollTo(Self.bottomScrollAnchorID, anchor: .bottom)
+			return
+		}
+
+		scrollProxy.scrollTo(selectedIndex)
+	}
+
 	var body: some View {
-		ScrollView(.vertical) {
-			VStack(alignment: .leading, spacing: sectionSpacing) {
-				ForEach(model.groupedItems) { section in
-					PromptSuggestionSectionView(
-						section: section,
-						isCompact: isCompact,
-						selectedIndex: model.selectedIndex,
-						onSelect: select
-					)
+		ScrollViewReader { scrollProxy in
+			ScrollView(.vertical) {
+				VStack(alignment: .leading, spacing: sectionSpacing) {
+					Color.clear
+						.frame(height: 1)
+						.id(Self.topScrollAnchorID)
+
+					ForEach(model.groupedItems) { section in
+						PromptSuggestionSectionView(
+							section: section,
+							isCompact: isCompact,
+							selectedIndex: model.selectedIndex,
+							onSelect: select
+						)
+					}
+
+					Color.clear
+						.frame(height: 1)
+						.id(Self.bottomScrollAnchorID)
+				}
+				.padding(isCompact ? 10 : 12)
+			}
+			.scrollIndicators(.hidden)
+			.onChange(of: model.selectedIndex, initial: true) { oldSelectedIndex, newSelectedIndex in
+				guard model.items.indices.contains(newSelectedIndex) else { return }
+				let scrollAction = {
+					scrollToSelection(newSelectedIndex, with: scrollProxy)
+				}
+
+				if !accessibilityReduceMotion, oldSelectedIndex != newSelectedIndex {
+					withAnimation(suggestionScrollAnimation) {
+						scrollAction()
+					}
+				} else {
+					scrollAction()
 				}
 			}
-			.padding(isCompact ? 10 : 12)
 		}
-		.scrollIndicators(.hidden)
 		.frame(width: activeWidth)
 		.frame(maxHeight: activeMaxHeight)
 		.background(panelBackground)
@@ -196,6 +243,7 @@ private struct PromptSuggestionSectionView: View {
 						showsDivider: position != section.rows.count - 1,
 						onSelect: onSelect
 					)
+					.id(indexed.index)
 				}
 			}
 		}
