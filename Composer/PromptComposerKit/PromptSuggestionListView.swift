@@ -27,13 +27,17 @@ struct PromptSuggestionListView: View {
 	}
 
 	private var panelBackground: some View {
-		RoundedRectangle(cornerRadius: 14, style: .continuous)
+		panelShape
 			.fill(Color(nsColor: .windowBackgroundColor))
 	}
 
 	private var panelBorder: some View {
+		panelShape
+			.strokeBorder(Color(nsColor: .separatorColor).opacity(0.75), lineWidth: 1)
+	}
+
+	private var panelShape: RoundedRectangle {
 		RoundedRectangle(cornerRadius: 14, style: .continuous)
-			.stroke(Color(nsColor: .separatorColor).opacity(0.75), lineWidth: 1)
 	}
 
 	private var sectionSpacing: CGFloat {
@@ -135,8 +139,8 @@ struct PromptSuggestionListView: View {
 		.frame(width: activeWidth)
 		.frame(maxHeight: activeMaxHeight)
 		.background(panelBackground)
+		.clipShape(panelShape)
 		.overlay(panelBorder)
-		.shadow(color: .black.opacity(0.13), radius: isCompact ? 12 : 16, x: 0, y: 6)
 	}
 }
 
