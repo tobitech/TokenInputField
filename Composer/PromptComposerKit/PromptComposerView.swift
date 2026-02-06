@@ -95,8 +95,15 @@ public struct PromptComposerView: NSViewRepresentable {
 			else { return }
 
 			// Push the updated attributed string to SwiftUI.
-			parent.state.attributedText = tv.attributedString()
-			parent.state.selectedRange = tv.selectedRange()
+			let updatedText = tv.attributedString()
+			if !parent.state.attributedText.isEqual(to: updatedText) {
+				parent.state.attributedText = updatedText
+			}
+
+			let selectedRange = tv.selectedRange()
+			if parent.state.selectedRange != selectedRange {
+				parent.state.selectedRange = selectedRange
+			}
 			scrollView?.updateHeight()
 			updateSuggestions(for: tv)
 		}

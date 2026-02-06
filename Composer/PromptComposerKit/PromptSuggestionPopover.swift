@@ -1,10 +1,11 @@
 import AppKit
-import Combine
+import Observation
 import SwiftUI
 
-final class PromptSuggestionViewModel: ObservableObject {
-	@Published var items: [PromptSuggestion] = []
-	@Published var selectedIndex: Int = 0
+@Observable
+final class PromptSuggestionViewModel {
+	var items: [PromptSuggestion] = []
+	var selectedIndex: Int = 0
 
 	var selectedItem: PromptSuggestion? {
 		guard items.indices.contains(selectedIndex) else { return nil }
@@ -59,7 +60,13 @@ final class PromptSuggestionViewModel: ObservableObject {
 			let normalizedTitle = item.section?.uppercased()
 			if normalizedTitle != currentTitle {
 				if !currentRows.isEmpty {
-					sections.append(PromptSuggestionSection(title: currentTitle, rows: currentRows))
+					sections.append(
+						PromptSuggestionSection(
+							id: currentRows[0].index,
+							title: currentTitle,
+							rows: currentRows
+						)
+					)
 					currentRows = []
 				}
 				currentTitle = normalizedTitle
@@ -68,7 +75,13 @@ final class PromptSuggestionViewModel: ObservableObject {
 		}
 
 		if !currentRows.isEmpty {
-			sections.append(PromptSuggestionSection(title: currentTitle, rows: currentRows))
+			sections.append(
+				PromptSuggestionSection(
+					id: currentRows[0].index,
+					title: currentTitle,
+					rows: currentRows
+				)
+			)
 		}
 
 		return sections
@@ -83,13 +96,13 @@ struct PromptSuggestionIndexedItem: Identifiable {
 }
 
 struct PromptSuggestionSection: Identifiable {
-	let id = UUID()
+	let id: Int
 	let title: String?
 	let rows: [PromptSuggestionIndexedItem]
 }
 
 struct PromptSuggestionListView: View {
-	@ObservedObject var model: PromptSuggestionViewModel
+	let model: PromptSuggestionViewModel
 	let onSelect: (PromptSuggestion) -> Void
 	let standardWidth: CGFloat
 	let standardMaxHeight: CGFloat
@@ -108,51 +121,110 @@ struct PromptSuggestionListView: View {
 		isCompact ? compactMaxHeight : standardMaxHeight
 	}
 
+	private var panelBackground: some View {
+		RoundedRectangle(cornerRadius: 14, style: .continuous)
+			.fill(Color(nsColor: .windowBackgroundColor))
+	}
+
+	private var panelBorder: some View {
+		RoundedRectangle(cornerRadius: 14, style: .continuous)
+			.stroke(Color(nsColor: .separatorColor).opacity(0.75), lineWidth: 1)
+	}
+
+	private var sectionSpacing: CGFloat {
+		isCompact ? 8 : 10
+	}
+
+	private func select(_ indexed: PromptSuggestionIndexedItem) {
+		if model.selectedIndex != indexed.index {
+			model.selectedIndex = indexed.index
+		}
+		onSelect(indexed.item)
+	}
+
 	var body: some View {
-		ScrollView(.vertical, showsIndicators: false) {
-			VStack(alignment: .leading, spacing: isCompact ? 8 : 10) {
+		ScrollView(.vertical) {
+			VStack(alignment: .leading, spacing: sectionSpacing) {
 				ForEach(model.groupedItems) { section in
-					VStack(alignment: .leading, spacing: isCompact ? 5 : 6) {
-						if let title = section.title, !title.isEmpty {
-							Text(title)
-								.font(.system(size: isCompact ? 11 : 12, weight: .semibold))
-								.foregroundColor(Color(NSColor.tertiaryLabelColor))
-						}
-
-						VStack(spacing: 0) {
-							ForEach(section.rows) { indexed in
-								PromptSuggestionRow(
-									item: indexed.item,
-									isSelected: indexed.index == model.selectedIndex,
-									isCompact: isCompact
-								)
-								.onTapGesture {
-									model.selectedIndex = indexed.index
-									onSelect(indexed.item)
-								}
-
-								if indexed.id != section.rows.last?.id {
-									Divider()
-										.overlay(Color(NSColor.separatorColor).opacity(0.5))
-								}
-							}
-						}
-					}
+					PromptSuggestionSectionView(
+						section: section,
+						isCompact: isCompact,
+						selectedIndex: model.selectedIndex,
+						onSelect: select
+					)
 				}
 			}
 			.padding(isCompact ? 10 : 12)
 		}
+		.scrollIndicators(.hidden)
 		.frame(width: activeWidth)
 		.frame(maxHeight: activeMaxHeight)
-		.background(
-			RoundedRectangle(cornerRadius: 14, style: .continuous)
-				.fill(Color(NSColor.windowBackgroundColor))
-		)
-			.overlay(
-				RoundedRectangle(cornerRadius: 14, style: .continuous)
-					.stroke(Color(NSColor.separatorColor).opacity(0.75), lineWidth: 1)
+		.background(panelBackground)
+		.overlay(panelBorder)
+		.shadow(color: .black.opacity(0.13), radius: isCompact ? 12 : 16, x: 0, y: 6)
+	}
+}
+
+private struct PromptSuggestionSectionView: View {
+	let section: PromptSuggestionSection
+	let isCompact: Bool
+	let selectedIndex: Int
+	let onSelect: (PromptSuggestionIndexedItem) -> Void
+
+	private var titleFont: Font {
+		.system(size: isCompact ? 11 : 12, weight: .semibold)
+	}
+
+	private var sectionSpacing: CGFloat {
+		isCompact ? 5 : 6
+	}
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: sectionSpacing) {
+			if let title = section.title, !title.isEmpty {
+				Text(title)
+					.font(titleFont)
+					.foregroundStyle(Color(nsColor: .tertiaryLabelColor))
+			}
+
+			VStack(spacing: 0) {
+				ForEach(Array(section.rows.enumerated()), id: \.element.id) { position, indexed in
+					PromptSuggestionRowButton(
+						indexed: indexed,
+						isSelected: indexed.index == selectedIndex,
+						isCompact: isCompact,
+						showsDivider: position != section.rows.count - 1,
+						onSelect: onSelect
+					)
+				}
+			}
+		}
+	}
+}
+
+private struct PromptSuggestionRowButton: View {
+	let indexed: PromptSuggestionIndexedItem
+	let isSelected: Bool
+	let isCompact: Bool
+	let showsDivider: Bool
+	let onSelect: (PromptSuggestionIndexedItem) -> Void
+
+	var body: some View {
+		Button {
+			onSelect(indexed)
+		} label: {
+			PromptSuggestionRow(
+				item: indexed.item,
+				isSelected: isSelected,
+				isCompact: isCompact
 			)
-		.shadow(color: Color.black.opacity(0.13), radius: isCompact ? 12 : 16, x: 0, y: 6)
+		}
+		.buttonStyle(.plain)
+		.overlay(alignment: .bottom) {
+			Divider()
+				.overlay(Color(nsColor: .separatorColor).opacity(0.5))
+				.opacity(showsDivider ? 1 : 0)
+		}
 	}
 }
 
@@ -160,6 +232,22 @@ struct PromptSuggestionRow: View {
 	let item: PromptSuggestion
 	let isSelected: Bool
 	let isCompact: Bool
+
+	private var primaryForeground: Color {
+		isSelected ? .white : Color(nsColor: .labelColor)
+	}
+
+	private var secondaryForeground: Color {
+		isSelected ? .white.opacity(0.92) : Color(nsColor: .secondaryLabelColor)
+	}
+
+	private var iconBackground: Color {
+		isSelected ? .white.opacity(0.22) : Color(nsColor: .controlBackgroundColor)
+	}
+
+	private var rowBackground: Color {
+		isSelected ? Color(nsColor: .controlAccentColor) : .clear
+	}
 
 	private var iconName: String {
 		if let symbolName = item.symbolName {
@@ -183,22 +271,18 @@ struct PromptSuggestionRow: View {
 				.frame(width: isCompact ? 24 : 32, height: isCompact ? 24 : 32)
 				.background(
 					Circle()
-						.fill(isSelected ? Color.white.opacity(0.22) : Color(NSColor.controlBackgroundColor))
+						.fill(iconBackground)
 				)
-				.foregroundColor(isSelected ? Color.white : Color(NSColor.labelColor))
+				.foregroundStyle(primaryForeground)
 
 			VStack(alignment: .leading, spacing: 2) {
 				Text(item.title)
 					.font(.system(size: isCompact ? 15 : 17, weight: .semibold))
-					.foregroundColor(isSelected ? Color.white : Color(NSColor.labelColor))
+					.foregroundStyle(primaryForeground)
 				if let subtitle = item.subtitle {
 					Text(subtitle)
 						.font(.system(size: isCompact ? 13 : 14, weight: .medium))
-						.foregroundColor(
-							isSelected
-								? Color.white.opacity(0.92)
-								: Color(NSColor.secondaryLabelColor)
-						)
+						.foregroundStyle(secondaryForeground)
 				}
 			}
 			.frame(maxWidth: .infinity, alignment: .leading)
@@ -207,9 +291,9 @@ struct PromptSuggestionRow: View {
 		.padding(.vertical, isCompact ? 5 : 7)
 		.background(
 			RoundedRectangle(cornerRadius: isCompact ? 7 : 8, style: .continuous)
-				.fill(isSelected ? Color(NSColor.controlAccentColor) : Color.clear)
+				.fill(rowBackground)
 		)
-		.contentShape(Rectangle())
+		.contentShape(.rect)
 	}
 }
 

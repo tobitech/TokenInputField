@@ -7,6 +7,24 @@ struct PromptComposerDemoView: View {
 		selectedRange: NSRange(location: 0, length: 0)
 	)
 
+	private var composerConfig: PromptComposerConfig {
+		var config = PromptComposerConfig()
+		config.submitsOnEnter = false
+		config.minVisibleLines = 1
+		config.maxVisibleLines = 10
+		config.growthDirection = .up
+		config.suggestionPanelWidth = 340
+		config.suggestionPanelMaxHeight = 280
+		config.compactSuggestionPanelWidth = 320
+		config.compactSuggestionPanelMaxHeight = 280
+		config.suggestionsProvider = { context in
+			Self.sampleSuggestions(for: context.triggerCharacter)
+		}
+		config.onSuggestionSelected = handleSuggestionSelection
+		config.onSubmit = handleSubmit
+		return config
+	}
+
 	var body: some View {
 		VStack(alignment: .leading, spacing: 12) {
 			Text("Plain string preview:")
@@ -19,32 +37,20 @@ struct PromptComposerDemoView: View {
 
 			PromptComposerView(
 				state: $state,
-				config: {
-					var c = PromptComposerConfig()
-					c.submitsOnEnter = false
-					c.minVisibleLines = 1
-					c.maxVisibleLines = 10
-					c.growthDirection = .up
-					c.suggestionPanelWidth = 340
-					c.suggestionPanelMaxHeight = 280
-					c.compactSuggestionPanelWidth = 320
-					c.compactSuggestionPanelMaxHeight = 280
-					c.suggestionsProvider = { context in
-						PromptComposerDemoView.sampleSuggestions(for: context.triggerCharacter)
-					}
-					c.onSuggestionSelected = { suggestion in
-						print("Selected suggestion: \(suggestion.title)")
-					}
-					c.onSubmit = {
-						// In Step 1 we just print; later we’ll expose a structured document model.
-						print("Submit: \(state.attributedText.string)")
-					}
-					return c
-				}()
+				config: composerConfig
 			)
 			.fixedSize(horizontal: false, vertical: true)
 		}
 		.padding()
+	}
+
+	private func handleSuggestionSelection(_ suggestion: PromptSuggestion) {
+		print("Selected suggestion: \(suggestion.title)")
+	}
+
+	private func handleSubmit() {
+		// In Step 1 we just print; later we’ll expose a structured document model.
+		print("Submit: \(state.attributedText.string)")
 	}
 
 	private static func sampleAttributedText() -> NSAttributedString {
@@ -149,29 +155,3 @@ struct PromptComposerDemoView: View {
 #Preview {
 	PromptComposerDemoView()
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
