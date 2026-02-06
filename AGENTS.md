@@ -54,3 +54,28 @@
 - Target is macOS (AppKit + SwiftUI + TextKit 2).
 - Prefer AppKit-backed text editing for performance; keep SwiftUI wrappers thin.
 - If a flaw or mismatch is discovered in `plan.md` during implementation, do not follow it blindly. Choose the best solution for the codebase and update `plan.md` to reflect the corrected approach.
+
+## Motion & Animation Guidelines
+- Apply motion proactively when it improves clarity, feedback, or delight. Do not wait for the user to explicitly ask for animation when it is an obvious UX improvement.
+- Treat animation as a default for no-brainer UI interactions:
+  - Component enter/exit transitions (popover, menu, modal, tooltip, drawer).
+  - Selection/focus movement (including keyboard navigation in suggestion lists).
+  - Hover/press feedback and state toggles.
+  - Scroll-to-reveal behavior when moving selection through off-screen items.
+- Use native platform APIs instead of web libraries:
+  - SwiftUI: `withAnimation`, `.animation(_:value:)`, `transition`, `matchedGeometryEffect`, and spring/easing animations.
+  - AppKit: `NSAnimationContext.runAnimationGroup`, `animator()`, and animated `NSScrollView` content offset updates.
+- Motion timing/easing defaults (adjust by distance and UI weight):
+  - 100-180ms: micro feedback (hover, press, subtle emphasis).
+  - 180-300ms: standard component/state transitions.
+  - 300-450ms: larger panel/layout movement.
+  - Easing: ease-out for enter, ease-in for exit, ease-in-out or spring for positional changes.
+- Accessibility is required:
+  - SwiftUI: respect `@Environment(\.accessibilityReduceMotion)`.
+  - AppKit: respect `NSWorkspace.shared.accessibilityDisplayShouldReduceMotion`.
+  - Provide reduced-motion fallbacks (shorter or no motion) while preserving information hierarchy.
+- Performance and coherence standards:
+  - Prefer opacity/transform-like animations over expensive layout thrash.
+  - Avoid unnecessary animation on very high-frequency updates unless motion improves comprehension.
+  - Keep related elements synchronized with shared timing/easing.
+  - For boundary list navigation, fully reveal boundaries: first item aligned to top (header visible), last item aligned to bottom.
