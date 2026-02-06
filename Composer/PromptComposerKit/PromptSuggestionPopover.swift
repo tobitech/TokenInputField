@@ -67,40 +67,59 @@ struct PromptSuggestionSection: Identifiable {
 struct PromptSuggestionListView: View {
 	@ObservedObject var model: PromptSuggestionViewModel
 	let onSelect: (PromptSuggestion) -> Void
+	let standardWidth: CGFloat
+	let standardMaxHeight: CGFloat
+	let compactWidth: CGFloat
+	let compactMaxHeight: CGFloat
+
+	private var isCompact: Bool {
+		model.items.allSatisfy { ($0.subtitle ?? "").isEmpty }
+	}
+
+	private var activeWidth: CGFloat {
+		isCompact ? compactWidth : standardWidth
+	}
+
+	private var activeMaxHeight: CGFloat {
+		isCompact ? compactMaxHeight : standardMaxHeight
+	}
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 10) {
-			ForEach(model.groupedItems) { section in
-				VStack(alignment: .leading, spacing: 6) {
-					if let title = section.title, !title.isEmpty {
-						Text(title)
-							.font(.system(size: 12, weight: .semibold))
-							.foregroundColor(Color(NSColor.tertiaryLabelColor))
-					}
+		ScrollView(.vertical, showsIndicators: false) {
+			VStack(alignment: .leading, spacing: isCompact ? 8 : 10) {
+				ForEach(model.groupedItems) { section in
+					VStack(alignment: .leading, spacing: isCompact ? 5 : 6) {
+						if let title = section.title, !title.isEmpty {
+							Text(title)
+								.font(.system(size: isCompact ? 11 : 12, weight: .semibold))
+								.foregroundColor(Color(NSColor.tertiaryLabelColor))
+						}
 
-					VStack(spacing: 0) {
-						ForEach(section.rows) { indexed in
-							PromptSuggestionRow(
-								item: indexed.item,
-								isSelected: indexed.index == model.selectedIndex
-							)
-							.onTapGesture {
-								model.selectedIndex = indexed.index
-								onSelect(indexed.item)
-							}
+						VStack(spacing: 0) {
+							ForEach(section.rows) { indexed in
+								PromptSuggestionRow(
+									item: indexed.item,
+									isSelected: indexed.index == model.selectedIndex,
+									isCompact: isCompact
+								)
+								.onTapGesture {
+									model.selectedIndex = indexed.index
+									onSelect(indexed.item)
+								}
 
-							if indexed.id != section.rows.last?.id {
-								Divider()
-									.overlay(Color(NSColor.separatorColor).opacity(0.5))
+								if indexed.id != section.rows.last?.id {
+									Divider()
+										.overlay(Color(NSColor.separatorColor).opacity(0.5))
+								}
 							}
 						}
 					}
 				}
 			}
+			.padding(isCompact ? 10 : 12)
 		}
-		.padding(12)
-		.frame(width: 360)
-		.fixedSize(horizontal: false, vertical: true)
+		.frame(width: activeWidth)
+		.frame(maxHeight: activeMaxHeight)
 		.background(
 			RoundedRectangle(cornerRadius: 14, style: .continuous)
 				.fill(Color(NSColor.windowBackgroundColor))
@@ -109,13 +128,14 @@ struct PromptSuggestionListView: View {
 				RoundedRectangle(cornerRadius: 14, style: .continuous)
 					.stroke(Color(NSColor.separatorColor).opacity(0.75), lineWidth: 1)
 			)
-		.shadow(color: Color.black.opacity(0.13), radius: 16, x: 0, y: 6)
+		.shadow(color: Color.black.opacity(0.13), radius: isCompact ? 12 : 16, x: 0, y: 6)
 	}
 }
 
 struct PromptSuggestionRow: View {
 	let item: PromptSuggestion
 	let isSelected: Bool
+	let isCompact: Bool
 
 	private var iconName: String {
 		if let symbolName = item.symbolName {
@@ -133,10 +153,10 @@ struct PromptSuggestionRow: View {
 	}
 
 	var body: some View {
-		HStack(alignment: .top, spacing: 10) {
+		HStack(alignment: .top, spacing: isCompact ? 8 : 10) {
 			Image(systemName: iconName)
-				.font(.system(size: 15, weight: .semibold))
-				.frame(width: 32, height: 32)
+				.font(.system(size: isCompact ? 12 : 15, weight: .semibold))
+				.frame(width: isCompact ? 24 : 32, height: isCompact ? 24 : 32)
 				.background(
 					Circle()
 						.fill(isSelected ? Color.white.opacity(0.22) : Color(NSColor.controlBackgroundColor))
@@ -145,11 +165,11 @@ struct PromptSuggestionRow: View {
 
 			VStack(alignment: .leading, spacing: 2) {
 				Text(item.title)
-					.font(.system(size: 17, weight: .semibold))
+					.font(.system(size: isCompact ? 15 : 17, weight: .semibold))
 					.foregroundColor(isSelected ? Color.white : Color(NSColor.labelColor))
 				if let subtitle = item.subtitle {
 					Text(subtitle)
-						.font(.system(size: 14, weight: .medium))
+						.font(.system(size: isCompact ? 13 : 14, weight: .medium))
 						.foregroundColor(
 							isSelected
 								? Color.white.opacity(0.92)
@@ -159,10 +179,10 @@ struct PromptSuggestionRow: View {
 			}
 			.frame(maxWidth: .infinity, alignment: .leading)
 		}
-		.padding(.horizontal, 8)
-		.padding(.vertical, 7)
+		.padding(.horizontal, isCompact ? 6 : 8)
+		.padding(.vertical, isCompact ? 5 : 7)
 		.background(
-			RoundedRectangle(cornerRadius: 8, style: .continuous)
+			RoundedRectangle(cornerRadius: isCompact ? 7 : 8, style: .continuous)
 				.fill(isSelected ? Color(NSColor.controlAccentColor) : Color.clear)
 		)
 		.contentShape(Rectangle())
@@ -179,14 +199,25 @@ final class PromptSuggestionPanelController: NSObject {
 	private let viewModel = PromptSuggestionViewModel()
 	private let hostingView: NSHostingView<PromptSuggestionListView>
 	private var anchorRange: NSRange?
+	private weak var observedWindow: NSWindow?
+	private var windowObservers: [NSObjectProtocol] = []
+	private var standardWidth: CGFloat = 360
+	private var standardMaxHeight: CGFloat = 360
+	private var compactWidth: CGFloat = 328
+	private var compactMaxHeight: CGFloat = 300
+	private var isCompactMode: Bool = false
 
 	weak var textView: PromptComposerTextView?
 
 	override init() {
 		hostingView = NSHostingView(
-			rootView: PromptSuggestionListView(
+			rootView: Self.makeListView(
 				model: PromptSuggestionViewModel(),
-				onSelect: { _ in }
+				onSelect: { _ in },
+				standardWidth: 360,
+				standardMaxHeight: 360,
+				compactWidth: 328,
+				compactMaxHeight: 300
 			)
 		)
 		panel = FloatingPanel(
@@ -197,12 +228,7 @@ final class PromptSuggestionPanelController: NSObject {
 		)
 		super.init()
 
-		hostingView.rootView = PromptSuggestionListView(
-			model: viewModel,
-			onSelect: { [weak self] item in
-				self?.select(item)
-			}
-		)
+		rebuildListView()
 		panel.contentView = hostingView
 		panel.isOpaque = false
 		panel.backgroundColor = .clear
@@ -217,9 +243,15 @@ final class PromptSuggestionPanelController: NSObject {
 		panel.isVisible
 	}
 
+	deinit {
+		removeWindowObservers()
+	}
+
 	func update(items: [PromptSuggestion], anchorRange: NSRange?) {
 		viewModel.updateItems(items)
 		self.anchorRange = anchorRange
+		applySizingFromConfig()
+		rebuildListView()
 
 		guard !items.isEmpty else {
 			close()
@@ -267,7 +299,13 @@ final class PromptSuggestionPanelController: NSObject {
 	}
 
 	private func showOrUpdate() {
-		guard textView != nil else { return }
+		guard let hostWindow = textView?.window else { return }
+		if panel.parent !== hostWindow {
+			panel.parent?.removeChildWindow(panel)
+			hostWindow.addChildWindow(panel, ordered: .above)
+		}
+		observeWindowIfNeeded(hostWindow)
+
 		positionPanel()
 		if !panel.isVisible {
 			panel.orderFront(nil)
@@ -283,7 +321,10 @@ final class PromptSuggestionPanelController: NSObject {
 	}
 
 	private func close() {
+		panel.parent?.removeChildWindow(panel)
 		panel.orderOut(nil)
+		removeWindowObservers()
+		observedWindow = nil
 	}
 
 	private func positionPanel() {
@@ -295,32 +336,124 @@ final class PromptSuggestionPanelController: NSObject {
 		}
 
 		let fittingSize = hostingView.fittingSize
-		let panelWidth = max(300, min(420, fittingSize.width))
-		let panelHeight = max(80, min(420, fittingSize.height))
-
 		let spacing: CGFloat = 8
-		var originX = anchorRect.minX
-		var originY = anchorRect.maxY + spacing
+		let preferredWidth = isCompactMode ? compactWidth : standardWidth
+		let preferredMaxHeight = isCompactMode ? compactMaxHeight : standardMaxHeight
+		let preferredHeight = min(preferredMaxHeight, max(80, fittingSize.height))
 
-		if let screen = textView.window?.screen ?? NSScreen.main {
-			let safeFrame = screen.visibleFrame.insetBy(dx: 8, dy: 8)
-
-			if originX + panelWidth > safeFrame.maxX {
-				originX = safeFrame.maxX - panelWidth
-			}
-			if originX < safeFrame.minX {
-				originX = safeFrame.minX
-			}
-
-			if originY + panelHeight > safeFrame.maxY {
-				originY = anchorRect.minY - panelHeight - spacing
-			}
-			if originY < safeFrame.minY {
-				originY = safeFrame.minY
-			}
+		guard let screen = textView.window?.screen ?? NSScreen.main else {
+			let frame = NSRect(
+				x: anchorRect.minX,
+				y: anchorRect.maxY + spacing,
+				width: preferredWidth,
+				height: preferredHeight
+			)
+			panel.setFrame(frame, display: panel.isVisible)
+			return
 		}
+
+		let safeFrame = screen.visibleFrame.insetBy(dx: 8, dy: 8)
+		let panelWidth = min(preferredWidth, max(220, safeFrame.width))
+		var panelHeight = min(preferredHeight, max(80, safeFrame.height))
+
+		let availableAbove = safeFrame.maxY - (anchorRect.maxY + spacing)
+		let availableBelow = (anchorRect.minY - spacing) - safeFrame.minY
+		let canFitAbove = availableAbove >= panelHeight
+		let canFitBelow = availableBelow >= panelHeight
+		let placeAbove: Bool
+
+		if canFitAbove {
+			placeAbove = true
+		} else if canFitBelow {
+			placeAbove = false
+		} else {
+			placeAbove = availableAbove >= availableBelow
+			let fallbackHeight = max(80, max(availableAbove, availableBelow))
+			panelHeight = min(panelHeight, fallbackHeight)
+		}
+
+		var originY = placeAbove
+			? anchorRect.maxY + spacing
+			: anchorRect.minY - panelHeight - spacing
+		originY = min(max(originY, safeFrame.minY), safeFrame.maxY - panelHeight)
+
+		// Prefer left-alignment with trigger; if constrained, shift and keep visible.
+		var originX = anchorRect.minX
+		if originX + panelWidth > safeFrame.maxX {
+			originX = anchorRect.maxX - panelWidth
+		}
+		originX = min(max(originX, safeFrame.minX), safeFrame.maxX - panelWidth)
 
 		let frame = NSRect(x: originX, y: originY, width: panelWidth, height: panelHeight)
 		panel.setFrame(frame, display: panel.isVisible)
+	}
+
+	private func applySizingFromConfig() {
+		isCompactMode = viewModel.items.allSatisfy { ($0.subtitle ?? "").isEmpty }
+		guard let config = textView?.config else { return }
+
+		standardWidth = max(220, config.suggestionPanelWidth)
+		standardMaxHeight = max(80, config.suggestionPanelMaxHeight)
+		compactWidth = max(220, config.compactSuggestionPanelWidth)
+		compactMaxHeight = max(80, config.compactSuggestionPanelMaxHeight)
+	}
+
+	private func rebuildListView() {
+		hostingView.rootView = Self.makeListView(
+			model: viewModel,
+			onSelect: { [weak self] item in
+				self?.select(item)
+			},
+			standardWidth: standardWidth,
+			standardMaxHeight: standardMaxHeight,
+			compactWidth: compactWidth,
+			compactMaxHeight: compactMaxHeight
+		)
+	}
+
+	private static func makeListView(
+		model: PromptSuggestionViewModel,
+		onSelect: @escaping (PromptSuggestion) -> Void,
+		standardWidth: CGFloat,
+		standardMaxHeight: CGFloat,
+		compactWidth: CGFloat,
+		compactMaxHeight: CGFloat
+	) -> PromptSuggestionListView {
+		PromptSuggestionListView(
+			model: model,
+			onSelect: onSelect,
+			standardWidth: standardWidth,
+			standardMaxHeight: standardMaxHeight,
+			compactWidth: compactWidth,
+			compactMaxHeight: compactMaxHeight
+		)
+	}
+
+	private func observeWindowIfNeeded(_ window: NSWindow) {
+		guard observedWindow !== window else { return }
+
+		removeWindowObservers()
+		observedWindow = window
+
+		let center = NotificationCenter.default
+		let names: [Notification.Name] = [
+			NSWindow.didMoveNotification,
+			NSWindow.didResizeNotification,
+			NSWindow.didChangeScreenNotification,
+		]
+
+		windowObservers = names.map { name in
+			center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+				self?.positionPanel()
+			}
+		}
+	}
+
+	private func removeWindowObservers() {
+		let center = NotificationCenter.default
+		for observer in windowObservers {
+			center.removeObserver(observer)
+		}
+		windowObservers.removeAll()
 	}
 }

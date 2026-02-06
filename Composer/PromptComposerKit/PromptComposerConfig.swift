@@ -47,6 +47,14 @@ public struct PromptComposerConfig {
 
 	/// Called when a suggestion is selected.
 	public var onSuggestionSelected: ((PromptSuggestion) -> Void)? = nil
+
+	/// Suggestion panel sizing for non-compact lists (for example slash commands).
+	public var suggestionPanelWidth: CGFloat = 360
+	public var suggestionPanelMaxHeight: CGFloat = 360
+
+	/// Suggestion panel sizing for compact lists (for example @ mentions).
+	public var compactSuggestionPanelWidth: CGFloat = 328
+	public var compactSuggestionPanelMaxHeight: CGFloat = 300
 	
 	public init() {}
 }

@@ -25,6 +25,10 @@ struct PromptComposerDemoView: View {
 					c.minVisibleLines = 1
 					c.maxVisibleLines = 10
 					c.growthDirection = .up
+					c.suggestionPanelWidth = 340
+					c.suggestionPanelMaxHeight = 280
+					c.compactSuggestionPanelWidth = 320
+					c.compactSuggestionPanelMaxHeight = 280
 					c.suggestionsProvider = { context in
 						PromptComposerDemoView.sampleSuggestions(for: context.triggerCharacter)
 					}
@@ -145,7 +149,6 @@ struct PromptComposerDemoView: View {
 #Preview {
 	PromptComposerDemoView()
 }
-
 
 
 
