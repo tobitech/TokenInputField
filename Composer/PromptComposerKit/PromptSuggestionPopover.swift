@@ -1,18 +1,17 @@
 import AppKit
 import SwiftUI
 
-final class PromptSuggestionPanelController: NSObject {
-	private final class FloatingPanel: NSPanel {
-		override var canBecomeKey: Bool { false }
-		override var canBecomeMain: Bool { false }
-	}
+private final class PromptSuggestionFloatingPanel: NSPanel {
+	override var canBecomeKey: Bool { false }
+	override var canBecomeMain: Bool { false }
+}
 
-	private let panel: FloatingPanel
+final class PromptSuggestionPanelController: NSObject {
+	private let panel: PromptSuggestionFloatingPanel
 	private let viewModel = PromptSuggestionViewModel()
 	private let hostingView: NSHostingView<PromptSuggestionListView>
+	private let windowObserver = PromptSuggestionWindowObserver()
 	private var anchorRange: NSRange?
-	private weak var observedWindow: NSWindow?
-	private var windowObservers: [NSObjectProtocol] = []
 	private var standardWidth: CGFloat = 360
 	private var standardMaxHeight: CGFloat = 360
 	private var compactWidth: CGFloat = 328
@@ -32,7 +31,7 @@ final class PromptSuggestionPanelController: NSObject {
 				compactMaxHeight: 300
 			)
 		)
-		panel = FloatingPanel(
+		panel = PromptSuggestionFloatingPanel(
 			contentRect: NSRect(x: 0, y: 0, width: 360, height: 220),
 			styleMask: [.borderless, .nonactivatingPanel],
 			backing: .buffered,
@@ -41,14 +40,7 @@ final class PromptSuggestionPanelController: NSObject {
 		super.init()
 
 		rebuildListView()
-		panel.contentView = hostingView
-		panel.isOpaque = false
-		panel.backgroundColor = .clear
-		panel.hasShadow = true
-		panel.level = .floating
-		panel.isFloatingPanel = true
-		panel.hidesOnDeactivate = false
-		panel.collectionBehavior = [.fullScreenAuxiliary, .moveToActiveSpace]
+		configurePanel()
 	}
 
 	var isVisible: Bool {
@@ -56,7 +48,7 @@ final class PromptSuggestionPanelController: NSObject {
 	}
 
 	deinit {
-		removeWindowObservers()
+		windowObserver.invalidate()
 	}
 
 	func update(items: [PromptSuggestion], anchorRange: NSRange?) {
@@ -110,13 +102,26 @@ final class PromptSuggestionPanelController: NSObject {
 		close()
 	}
 
+	private func configurePanel() {
+		panel.contentView = hostingView
+		panel.isOpaque = false
+		panel.backgroundColor = .clear
+		panel.hasShadow = true
+		panel.level = .floating
+		panel.isFloatingPanel = true
+		panel.hidesOnDeactivate = false
+		panel.collectionBehavior = [.fullScreenAuxiliary, .moveToActiveSpace]
+	}
+
 	private func showOrUpdate() {
 		guard let hostWindow = textView?.window else { return }
 		if panel.parent !== hostWindow {
 			panel.parent?.removeChildWindow(panel)
 			hostWindow.addChildWindow(panel, ordered: .above)
 		}
-		observeWindowIfNeeded(hostWindow)
+		windowObserver.observe(window: hostWindow) { [weak self] in
+			self?.positionPanel()
+		}
 
 		positionPanel()
 		if !panel.isVisible {
@@ -135,8 +140,7 @@ final class PromptSuggestionPanelController: NSObject {
 	private func close() {
 		panel.parent?.removeChildWindow(panel)
 		panel.orderOut(nil)
-		removeWindowObservers()
-		observedWindow = nil
+		windowObserver.invalidate()
 	}
 
 	private func positionPanel() {
@@ -148,55 +152,15 @@ final class PromptSuggestionPanelController: NSObject {
 		}
 
 		let fittingSize = hostingView.fittingSize
-		let spacing: CGFloat = 8
 		let preferredWidth = isCompactMode ? compactWidth : standardWidth
 		let preferredMaxHeight = isCompactMode ? compactMaxHeight : standardMaxHeight
-		let preferredHeight = min(preferredMaxHeight, max(80, fittingSize.height))
-
-		guard let screen = textView.window?.screen ?? NSScreen.main else {
-			let frame = NSRect(
-				x: anchorRect.minX,
-				y: anchorRect.maxY + spacing,
-				width: preferredWidth,
-				height: preferredHeight
-			)
-			panel.setFrame(frame, display: panel.isVisible)
-			return
-		}
-
-		let safeFrame = screen.visibleFrame.insetBy(dx: 8, dy: 8)
-		let panelWidth = min(preferredWidth, max(220, safeFrame.width))
-		var panelHeight = min(preferredHeight, max(80, safeFrame.height))
-
-		let availableAbove = safeFrame.maxY - (anchorRect.maxY + spacing)
-		let availableBelow = (anchorRect.minY - spacing) - safeFrame.minY
-		let canFitAbove = availableAbove >= panelHeight
-		let canFitBelow = availableBelow >= panelHeight
-		let placeAbove: Bool
-
-		if canFitAbove {
-			placeAbove = true
-		} else if canFitBelow {
-			placeAbove = false
-		} else {
-			placeAbove = availableAbove >= availableBelow
-			let fallbackHeight = max(80, max(availableAbove, availableBelow))
-			panelHeight = min(panelHeight, fallbackHeight)
-		}
-
-		var originY = placeAbove
-			? anchorRect.maxY + spacing
-			: anchorRect.minY - panelHeight - spacing
-		originY = min(max(originY, safeFrame.minY), safeFrame.maxY - panelHeight)
-
-		// Prefer left-alignment with trigger; if constrained, shift and keep visible.
-		var originX = anchorRect.minX
-		if originX + panelWidth > safeFrame.maxX {
-			originX = anchorRect.maxX - panelWidth
-		}
-		originX = min(max(originX, safeFrame.minX), safeFrame.maxX - panelWidth)
-
-		let frame = NSRect(x: originX, y: originY, width: panelWidth, height: panelHeight)
+		let frame = PromptSuggestionPanelPositioning.frame(
+			anchorRect: anchorRect,
+			fittingSize: fittingSize,
+			preferredWidth: preferredWidth,
+			preferredMaxHeight: preferredMaxHeight,
+			screen: textView.window?.screen ?? NSScreen.main
+		)
 		panel.setFrame(frame, display: panel.isVisible)
 	}
 
@@ -239,33 +203,5 @@ final class PromptSuggestionPanelController: NSObject {
 			compactWidth: compactWidth,
 			compactMaxHeight: compactMaxHeight
 		)
-	}
-
-	private func observeWindowIfNeeded(_ window: NSWindow) {
-		guard observedWindow !== window else { return }
-
-		removeWindowObservers()
-		observedWindow = window
-
-		let center = NotificationCenter.default
-		let names: [Notification.Name] = [
-			NSWindow.didMoveNotification,
-			NSWindow.didResizeNotification,
-			NSWindow.didChangeScreenNotification,
-		]
-
-		windowObservers = names.map { name in
-			center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
-				self?.positionPanel()
-			}
-		}
-	}
-
-	private func removeWindowObservers() {
-		let center = NotificationCenter.default
-		for observer in windowObservers {
-			center.removeObserver(observer)
-		}
-		windowObservers.removeAll()
 	}
 }

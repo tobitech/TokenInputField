@@ -41,7 +41,7 @@ struct PromptSuggestionListView: View {
 	}
 
 	private var suggestionScrollAnimation: Animation {
-		.easeOut(duration: 0.18)
+		.easeInOut(duration: 0.2)
 	}
 
 	private func select(_ indexed: PromptSuggestionIndexedItem) {
@@ -51,7 +51,11 @@ struct PromptSuggestionListView: View {
 		onSelect(indexed.item)
 	}
 
-	private func scrollToSelection(_ selectedIndex: Int, with scrollProxy: ScrollViewProxy) {
+	private func scrollToSelection(
+		_ selectedIndex: Int,
+		from previousSelectedIndex: Int,
+		with scrollProxy: ScrollViewProxy
+	) {
 		if selectedIndex == 0 {
 			scrollProxy.scrollTo(Self.topScrollAnchorID, anchor: .top)
 			return
@@ -62,7 +66,13 @@ struct PromptSuggestionListView: View {
 			return
 		}
 
-		scrollProxy.scrollTo(selectedIndex)
+		if selectedIndex == previousSelectedIndex {
+			scrollProxy.scrollTo(selectedIndex)
+			return
+		}
+
+		let anchor: UnitPoint = selectedIndex > previousSelectedIndex ? .bottom : .top
+		scrollProxy.scrollTo(selectedIndex, anchor: anchor)
 	}
 
 	var body: some View {
@@ -92,7 +102,11 @@ struct PromptSuggestionListView: View {
 			.onChange(of: model.selectedIndex, initial: true) { oldSelectedIndex, newSelectedIndex in
 				guard model.items.indices.contains(newSelectedIndex) else { return }
 				let scrollAction = {
-					scrollToSelection(newSelectedIndex, with: scrollProxy)
+					scrollToSelection(
+						newSelectedIndex,
+						from: oldSelectedIndex,
+						with: scrollProxy
+					)
 				}
 
 				if !accessibilityReduceMotion, oldSelectedIndex != newSelectedIndex {
