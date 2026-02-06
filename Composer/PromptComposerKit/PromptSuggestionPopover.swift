@@ -12,11 +12,35 @@ final class PromptSuggestionViewModel: ObservableObject {
 	}
 
 	func updateItems(_ newItems: [PromptSuggestion]) {
+		let normalizedSelectedIndex: Int
+		if newItems.isEmpty {
+			normalizedSelectedIndex = 0
+		} else {
+			normalizedSelectedIndex = min(max(selectedIndex, 0), newItems.count - 1)
+		}
+
+		let isEquivalentItemSet = Self.hasEquivalentDisplayContent(lhs: newItems, rhs: items)
+		guard !isEquivalentItemSet || normalizedSelectedIndex != selectedIndex else {
+			return
+		}
+
 		items = newItems
-		if items.isEmpty {
-			selectedIndex = 0
-		} else if selectedIndex >= items.count {
-			selectedIndex = max(0, items.count - 1)
+		if selectedIndex != normalizedSelectedIndex {
+			selectedIndex = normalizedSelectedIndex
+		}
+	}
+
+	private static func hasEquivalentDisplayContent(
+		lhs: [PromptSuggestion],
+		rhs: [PromptSuggestion]
+	) -> Bool {
+		guard lhs.count == rhs.count else { return false }
+		return zip(lhs, rhs).allSatisfy { left, right in
+			left.title == right.title
+				&& left.subtitle == right.subtitle
+				&& left.kind == right.kind
+				&& left.section == right.section
+				&& left.symbolName == right.symbolName
 		}
 	}
 

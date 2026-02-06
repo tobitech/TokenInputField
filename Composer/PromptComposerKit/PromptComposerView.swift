@@ -106,8 +106,18 @@ public struct PromptComposerView: NSViewRepresentable {
 				let tv = notification.object as? NSTextView
 			else { return }
 
-			parent.state.selectedRange = tv.selectedRange()
-			updateSuggestions(for: tv)
+			let selectedRange = tv.selectedRange()
+			DispatchQueue.main.async { [weak self, weak tv] in
+				guard let self else { return }
+				guard !self.isApplyingSwiftUIUpdate else { return }
+
+				if self.parent.state.selectedRange != selectedRange {
+					self.parent.state.selectedRange = selectedRange
+				}
+				if let tv {
+					self.updateSuggestions(for: tv)
+				}
+			}
 		}
 
 		public func textView(
