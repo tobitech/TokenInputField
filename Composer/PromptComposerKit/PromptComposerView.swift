@@ -79,19 +79,24 @@ public struct PromptComposerView: NSViewRepresentable {
 
 	public final class Coordinator: NSObject, NSTextViewDelegate {
 		fileprivate let parent: PromptComposerView
-		fileprivate weak var textView: NSTextView?
+		fileprivate weak var textView: PromptComposerTextView?
 		fileprivate weak var scrollView: PromptComposerScrollView?
 		fileprivate let suggestionController = PromptSuggestionPanelController()
 
 		fileprivate var isApplyingSwiftUIUpdate = false
+		private var activeSuggestionTrigger: ActiveTrigger?
 
 		init(parent: PromptComposerView) {
 			self.parent = parent
+			super.init()
+			suggestionController.onSelectSuggestion = { [weak self] suggestion in
+				self?.handleSelectedSuggestion(suggestion)
+			}
 		}
 
 		public func textDidChange(_ notification: Notification) {
 			guard !isApplyingSwiftUIUpdate,
-				let tv = notification.object as? NSTextView
+				let tv = notification.object as? PromptComposerTextView
 			else { return }
 
 			// Push the updated attributed string to SwiftUI.
@@ -110,7 +115,7 @@ public struct PromptComposerView: NSViewRepresentable {
 
 		public func textViewDidChangeSelection(_ notification: Notification) {
 			guard !isApplyingSwiftUIUpdate,
-				let tv = notification.object as? NSTextView
+				let tv = notification.object as? PromptComposerTextView
 			else { return }
 
 			let selectedRange = tv.selectedRange()
@@ -144,30 +149,129 @@ public struct PromptComposerView: NSViewRepresentable {
 			)
 		}
 
-		private func updateSuggestions(for textView: NSTextView) {
-			guard let promptTextView = textView as? PromptComposerTextView else {
-				return
-			}
+		private func updateSuggestions(for promptTextView: PromptComposerTextView) {
+			let selectedRange = promptTextView.selectedRange()
+			let trigger = activeTrigger(in: promptTextView.string, selectedRange: selectedRange)
+			activeSuggestionTrigger = trigger
 
-			guard let provider = promptTextView.config.suggestionsProvider else {
-				suggestionController.update(items: [], anchorRange: nil)
-				return
-			}
-
-			let trigger = activeTrigger(in: promptTextView.string, selectedRange: promptTextView.selectedRange())
 			let context = PromptSuggestionContext(
 				text: promptTextView.string,
-				selectedRange: promptTextView.selectedRange(),
+				selectedRange: selectedRange,
 				triggerCharacter: trigger?.character,
-				triggerRange: trigger?.range
+				triggerRange: trigger?.replacementRange,
+				triggerQuery: trigger?.query
 			)
-			let items = provider(context)
-			suggestionController.update(items: items, anchorRange: trigger?.range)
+
+			let items: [PromptSuggestion]
+			if let trigger, trigger.character == "@", let suggestFiles = promptTextView.config.suggestFiles {
+				items = normalizedFileSuggestions(from: suggestFiles(trigger.query))
+			} else if let provider = promptTextView.config.suggestionsProvider {
+				items = provider(context)
+			} else {
+				items = []
+			}
+
+			suggestionController.update(items: items, anchorRange: trigger?.anchorRange)
+		}
+
+		private func handleSelectedSuggestion(_ suggestion: PromptSuggestion) {
+			let onSuggestionSelected = parent.config.onSuggestionSelected
+			defer { onSuggestionSelected?(suggestion) }
+
+			guard
+				let textView,
+				let trigger = activeSuggestionTrigger
+					?? activeTrigger(in: textView.string, selectedRange: textView.selectedRange()),
+				trigger.character == "@"
+			else {
+				return
+			}
+
+			insertFileSuggestion(suggestion, replacing: trigger.replacementRange, in: textView)
+		}
+
+		private func normalizedFileSuggestions(from items: [PromptSuggestion]) -> [PromptSuggestion] {
+			items.map { item in
+				guard item.kind == nil else { return item }
+				var normalized = item
+				normalized.kind = .fileMention
+				return normalized
+			}
+		}
+
+		private func insertFileSuggestion(
+			_ suggestion: PromptSuggestion,
+			replacing range: NSRange,
+			in textView: PromptComposerTextView
+		) {
+			guard let textStorage = textView.textStorage else { return }
+
+			let clampedRange = clampRange(range, length: textStorage.length)
+			guard clampedRange.length > 0 else { return }
+
+			let token = makeFileToken(from: suggestion)
+			let typingAttributes = textView.typingAttributes
+			let tokenFont = (typingAttributes[.font] as? NSFont)
+				?? textView.font
+				?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+			let tokenTextColor = (typingAttributes[.foregroundColor] as? NSColor)
+				?? textView.textColor
+				?? .labelColor
+
+			let attachment = TokenAttachment(token: token)
+			attachment.attachmentCell = TokenAttachmentCell(
+				token: token,
+				font: tokenFont,
+				textColor: tokenTextColor
+			)
+
+			let replacement = NSMutableAttributedString(attachment: attachment)
+			if !typingAttributes.isEmpty {
+				replacement.addAttributes(
+					typingAttributes,
+					range: NSRange(location: 0, length: replacement.length)
+				)
+			}
+			replacement.append(NSAttributedString(string: " ", attributes: typingAttributes))
+
+			guard textView.shouldChangeText(in: clampedRange, replacementString: replacement.string) else {
+				return
+			}
+
+			textStorage.replaceCharacters(in: clampedRange, with: replacement)
+			textView.didChangeText()
+			textView.setSelectedRange(
+				NSRange(location: clampedRange.location + replacement.length, length: 0)
+			)
+			activeSuggestionTrigger = nil
+		}
+
+		private func makeFileToken(from suggestion: PromptSuggestion) -> Token {
+			var metadata: [String: String] = [
+				"suggestionID": suggestion.id.uuidString
+			]
+			if let subtitle = suggestion.subtitle, !subtitle.isEmpty {
+				metadata["subtitle"] = subtitle
+			}
+			return Token(
+				kind: .fileMention,
+				display: suggestion.title,
+				metadata: metadata
+			)
+		}
+
+		private func clampRange(_ range: NSRange, length: Int) -> NSRange {
+			let clampedLocation = min(max(0, range.location), length)
+			let maxLength = max(0, length - clampedLocation)
+			let clampedLength = min(max(0, range.length), maxLength)
+			return NSRange(location: clampedLocation, length: clampedLength)
 		}
 
 		private struct ActiveTrigger {
 			let character: Character
-			let range: NSRange
+			let replacementRange: NSRange
+			let anchorRange: NSRange
+			let query: String
 		}
 
 		private func activeTrigger(in text: String, selectedRange: NSRange) -> ActiveTrigger? {
@@ -178,31 +282,54 @@ public struct PromptComposerView: NSViewRepresentable {
 			let caretLocation = min(max(0, selectedRange.location), textLength)
 			guard caretLocation > 0 else { return nil }
 
-			var index = caretLocation - 1
-			while index >= 0 {
-				let value = nsText.character(at: index)
+			var tokenStart = caretLocation - 1
+			while tokenStart >= 0 {
+				let value = nsText.character(at: tokenStart)
 				if isWhitespaceOrNewline(value) {
-					return nil
+					tokenStart += 1
+					break
 				}
 
-				if value == 64 /* @ */ {
-					return ActiveTrigger(character: "@", range: NSRange(location: index, length: 1))
+				if tokenStart == 0 {
+					break
 				}
+				tokenStart -= 1
+			}
 
-				if value == 47 /* / */ {
-					if index == 0 {
-						return ActiveTrigger(character: "/", range: NSRange(location: index, length: 1))
-					}
+			guard tokenStart >= 0, tokenStart < caretLocation else { return nil }
 
-					let previous = nsText.character(at: index - 1)
-					if isWhitespaceOrNewline(previous) {
-						return ActiveTrigger(character: "/", range: NSRange(location: index, length: 1))
-					}
+			let marker = nsText.character(at: tokenStart)
+			let replacementRange = NSRange(
+				location: tokenStart,
+				length: caretLocation - tokenStart
+			)
+			let queryRange = NSRange(
+				location: tokenStart + 1,
+				length: max(0, caretLocation - tokenStart - 1)
+			)
+			let query = queryRange.length > 0 ? nsText.substring(with: queryRange) : ""
+			let anchorRange = NSRange(location: caretLocation, length: 0)
 
-					return nil
-				}
+			if marker == 64 /* @ */ {
+				return ActiveTrigger(
+					character: "@",
+					replacementRange: replacementRange,
+					anchorRange: anchorRange,
+					query: query
+				)
+			}
 
-				index -= 1
+			if marker == 47 /* / */ {
+				let isAtStart = tokenStart == 0
+				let followsWhitespace = !isAtStart && isWhitespaceOrNewline(nsText.character(at: tokenStart - 1))
+				guard isAtStart || followsWhitespace else { return nil }
+
+				return ActiveTrigger(
+					character: "/",
+					replacementRange: replacementRange,
+					anchorRange: anchorRange,
+					query: query
+				)
 			}
 
 			return nil

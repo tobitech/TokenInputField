@@ -17,8 +17,12 @@ struct PromptComposerDemoView: View {
 		config.suggestionPanelMaxHeight = 280
 		config.compactSuggestionPanelWidth = 320
 		config.compactSuggestionPanelMaxHeight = 280
+		config.suggestFiles = { query in
+			Self.sampleFileSuggestions(matching: query)
+		}
 		config.suggestionsProvider = { context in
-			Self.sampleSuggestions(for: context.triggerCharacter)
+			guard context.triggerCharacter == "/" else { return [] }
+			return Self.sampleCommandSuggestions()
 		}
 		config.onSuggestionSelected = handleSuggestionSelection
 		config.onSubmit = handleSubmit
@@ -70,85 +74,78 @@ struct PromptComposerDemoView: View {
 		)
 	}
 
-	private static func sampleSuggestions(for trigger: Character?) -> [PromptSuggestion] {
-		switch trigger {
-		case "@":
-			return [
-				PromptSuggestion(
-					title: "State Update Warning - History",
-					section: "Tabs",
-					symbolName: "bubble.left"
-				),
-				PromptSuggestion(
-					title: "Upload file from computer",
-					section: "Files",
-					symbolName: "doc.badge.plus"
-				),
-				PromptSuggestion(
-					title: "Search Web",
-					section: "Tools",
-					symbolName: "globe"
-				),
-				PromptSuggestion(
-					title: "Search memory",
-					section: "Tools",
-					symbolName: "scribble"
-				),
-				PromptSuggestion(
-					title: "Autofill",
-					section: "Tools",
-					symbolName: "character.textbox"
-				),
-				PromptSuggestion(
-					title: "Tabs",
-					section: "Tools",
-					symbolName: "rectangle.on.rectangle"
-				),
-				PromptSuggestion(
-					title: "Gmail",
-					section: "Apps",
-					symbolName: "envelope.fill"
-				),
-				PromptSuggestion(
-					title: "Google Calendar",
-					section: "Apps",
-					symbolName: "calendar"
-				),
-			]
-		case "/":
-			return [
-				PromptSuggestion(
-					title: "Research",
-					subtitle: "Access Dia's reasoning model for deeper thinking.",
-					kind: .command,
-					section: "General",
-					symbolName: "lightbulb"
-				),
-				PromptSuggestion(
-					title: "Analyze",
-					subtitle: "Analyze this content, looking for bias, patterns, trends, contradictions.",
-					kind: .command,
-					section: "General",
-					symbolName: "magnifyingglass.circle"
-				),
-				PromptSuggestion(
-					title: "Explain",
-					subtitle: "Please explain the concept, topic, or content in clear, accessible language.",
-					kind: .command,
-					section: "General",
-					symbolName: "lightbulb.max"
-				),
-				PromptSuggestion(
-					title: "Summarize",
-					subtitle: "Please provide a clear, concise summary of the attached content.",
-					kind: .command,
-					section: "General",
-					symbolName: "line.3.horizontal.decrease"
-				),
-			]
-		default:
-			return []
+	private static func sampleFileSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
+		let files: [PromptSuggestion] = [
+			PromptSuggestion(
+				title: "Budget.xlsx",
+				subtitle: "/Finance/Budget.xlsx",
+				kind: .fileMention,
+				section: "Recent files",
+				symbolName: "tablecells"
+			),
+			PromptSuggestion(
+				title: "Q1 Plan.md",
+				subtitle: "/Planning/Q1 Plan.md",
+				kind: .fileMention,
+				section: "Recent files",
+				symbolName: "doc.text"
+			),
+			PromptSuggestion(
+				title: "ProductRoadmap.pdf",
+				subtitle: "/Roadmap/ProductRoadmap.pdf",
+				kind: .fileMention,
+				section: "Shared",
+				symbolName: "doc.richtext"
+			),
+			PromptSuggestion(
+				title: "Interview Notes.txt",
+				subtitle: "/Notes/Interview Notes.txt",
+				kind: .fileMention,
+				section: "Shared",
+				symbolName: "note.text"
+			)
+		]
+
+		let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !query.isEmpty else { return files }
+
+		return files.filter { item in
+			item.title.localizedStandardContains(query)
+				|| (item.subtitle?.localizedStandardContains(query) ?? false)
 		}
+	}
+
+	private static func sampleCommandSuggestions() -> [PromptSuggestion] {
+		[
+			PromptSuggestion(
+				title: "Research",
+				subtitle: "Access Dia's reasoning model for deeper thinking.",
+				kind: .command,
+				section: "General",
+				symbolName: "lightbulb"
+			),
+			PromptSuggestion(
+				title: "Analyze",
+				subtitle: "Analyze this content, looking for bias, patterns, trends, contradictions.",
+				kind: .command,
+				section: "General",
+				symbolName: "magnifyingglass.circle"
+			),
+			PromptSuggestion(
+				title: "Explain",
+				subtitle: "Please explain the concept, topic, or content in clear, accessible language.",
+				kind: .command,
+				section: "General",
+				symbolName: "lightbulb.max"
+			),
+			PromptSuggestion(
+				title: "Summarize",
+				subtitle: "Please provide a clear, concise summary of the attached content.",
+				kind: .command,
+				section: "General",
+				symbolName: "line.3.horizontal.decrease"
+			)
+		]
 	}
 }
 

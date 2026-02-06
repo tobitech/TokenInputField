@@ -30,16 +30,19 @@ public struct PromptSuggestionContext: Equatable {
 	public var selectedRange: NSRange
 	public var triggerCharacter: Character?
 	public var triggerRange: NSRange?
+	public var triggerQuery: String?
 
 	public init(
 		text: String,
 		selectedRange: NSRange,
 		triggerCharacter: Character? = nil,
-		triggerRange: NSRange? = nil
+		triggerRange: NSRange? = nil,
+		triggerQuery: String? = nil
 	) {
 		self.text = text
 		self.selectedRange = selectedRange
 		self.triggerCharacter = triggerCharacter
 		self.triggerRange = triggerRange
+		self.triggerQuery = triggerQuery
 	}
 }

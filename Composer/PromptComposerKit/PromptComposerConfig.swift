@@ -45,6 +45,10 @@ public struct PromptComposerConfig {
 	/// Suggestion provider for the popover shell (Step 6).
 	public var suggestionsProvider: ((PromptSuggestionContext) -> [PromptSuggestion])? = nil
 
+	/// File mention suggestions for active `@` queries (Step 7).
+	/// The closure receives the query text without `@`.
+	public var suggestFiles: ((String) -> [PromptSuggestion])? = nil
+
 	/// Called when a suggestion is selected.
 	public var onSuggestionSelected: ((PromptSuggestion) -> Void)? = nil
 

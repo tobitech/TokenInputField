@@ -43,7 +43,7 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
   - Anchor to caret rect.
   - Done when: popover shows at caret with dummy data.
 
-- [ ] Step 7 — “@ file mention” trigger
+- [x] Step 7 — “@ file mention” trigger ✅
   - Detect active `@` query near caret.
   - Call `config.suggestFiles(query)`.
   - Replace typed `@foo` with file token + trailing space.

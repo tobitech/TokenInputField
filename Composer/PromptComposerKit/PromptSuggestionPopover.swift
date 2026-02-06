@@ -19,6 +19,7 @@ final class PromptSuggestionPanelController: NSObject {
 	private var isCompactMode: Bool = false
 
 	weak var textView: PromptComposerTextView?
+	var onSelectSuggestion: ((PromptSuggestion) -> Void)?
 
 	override init() {
 		hostingView = NSHostingView(
@@ -130,11 +131,9 @@ final class PromptSuggestionPanelController: NSObject {
 	}
 
 	private func select(_ item: PromptSuggestion) {
-		let onSuggestionSelected = textView?.config.onSuggestionSelected
+		let onSelectSuggestion = onSelectSuggestion
 		close()
-		DispatchQueue.main.async {
-			onSuggestionSelected?(item)
-		}
+		onSelectSuggestion?(item)
 	}
 
 	private func close() {
