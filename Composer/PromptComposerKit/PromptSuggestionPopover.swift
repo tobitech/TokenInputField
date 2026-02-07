@@ -5,17 +5,22 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 	override var canBecomeKey: Bool { false }
 	override var canBecomeMain: Bool { false }
 }
-
+/*
+ standardWidth: 320,
+ standardMaxHeight: 340,
+ compactWidth: 240,
+ compactMaxHeight: 260
+ */
 final class PromptSuggestionPanelController: NSObject {
 	private let panel: PromptSuggestionFloatingPanel
 	private let viewModel = PromptSuggestionViewModel()
 	private let hostingView: NSHostingView<PromptSuggestionListView>
 	private let windowObserver = PromptSuggestionWindowObserver()
 	private var anchorRange: NSRange?
-	private var standardWidth: CGFloat = 360
-	private var standardMaxHeight: CGFloat = 360
-	private var compactWidth: CGFloat = 328
-	private var compactMaxHeight: CGFloat = 300
+	private var standardWidth: CGFloat = 320
+	private var standardMaxHeight: CGFloat = 340
+	private var compactWidth: CGFloat = 240
+	private var compactMaxHeight: CGFloat = 260
 	private var isCompactMode: Bool = false
 
 	weak var textView: PromptComposerTextView?
@@ -52,10 +57,11 @@ final class PromptSuggestionPanelController: NSObject {
 		windowObserver.invalidate()
 	}
 
-	func update(items: [PromptSuggestion], anchorRange: NSRange?) {
+	func update(items: [PromptSuggestion], anchorRange: NSRange?, isCompact: Bool) {
+		viewModel.isCompact = isCompact
 		viewModel.updateItems(items)
 		self.anchorRange = anchorRange
-		applySizingFromConfig()
+		applySizingFromConfig(isCompact: isCompact)
 		rebuildListView()
 
 		guard !items.isEmpty else {
@@ -163,8 +169,8 @@ final class PromptSuggestionPanelController: NSObject {
 		panel.setFrame(frame, display: panel.isVisible)
 	}
 
-	private func applySizingFromConfig() {
-		isCompactMode = viewModel.items.allSatisfy { ($0.subtitle ?? "").isEmpty }
+	private func applySizingFromConfig(isCompact: Bool) {
+		isCompactMode = isCompact
 		guard let config = textView?.config else { return }
 
 		standardWidth = max(220, config.suggestionPanelWidth)

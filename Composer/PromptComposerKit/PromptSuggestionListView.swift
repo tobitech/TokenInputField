@@ -15,7 +15,7 @@ struct PromptSuggestionListView: View {
 	let compactMaxHeight: CGFloat
 
 	private var isCompact: Bool {
-		model.items.allSatisfy { ($0.subtitle ?? "").isEmpty }
+		model.isCompact
 	}
 
 	private var activeWidth: CGFloat {
@@ -41,7 +41,7 @@ struct PromptSuggestionListView: View {
 	}
 
 	private var sectionSpacing: CGFloat {
-		isCompact ? 8 : 10
+		isCompact ? 2 : 10
 	}
 
 	private func suggestionScrollAnimation(from oldSelectedIndex: Int, to newSelectedIndex: Int) -> Animation {
@@ -96,10 +96,11 @@ struct PromptSuggestionListView: View {
 						.frame(height: 1)
 						.id(Self.topScrollAnchorID)
 
-					ForEach(model.groupedItems) { section in
+					ForEach(Array(model.groupedItems.enumerated()), id: \.element.id) { sectionIndex, section in
 						PromptSuggestionSectionView(
 							section: section,
 							isCompact: isCompact,
+							isFirstSection: sectionIndex == 0,
 							selectedIndex: model.selectedIndex,
 							onSelect: select
 						)
@@ -109,7 +110,7 @@ struct PromptSuggestionListView: View {
 						.frame(height: 1)
 						.id(Self.bottomScrollAnchorID)
 				}
-				.padding(isCompact ? 10 : 12)
+				.padding(isCompact ? 6 : 12)
 			}
 			.scrollIndicators(.hidden)
 			.onChange(of: model.selectedIndex, initial: true) { oldSelectedIndex, newSelectedIndex in
@@ -147,165 +148,52 @@ struct PromptSuggestionListView: View {
 	}
 }
 
-private struct PromptSuggestionSectionView: View {
-	let section: PromptSuggestionSection
-	let isCompact: Bool
-	let selectedIndex: Int
-	let onSelect: (PromptSuggestionIndexedItem) -> Void
-
-	private var titleFont: Font {
-		.system(size: isCompact ? 11 : 12, weight: .semibold)
-	}
-
-	private var sectionSpacing: CGFloat {
-		isCompact ? 5 : 6
-	}
-
-	var body: some View {
-		VStack(alignment: .leading, spacing: sectionSpacing) {
-			if let title = section.title, !title.isEmpty {
-				Text(title)
-					.font(titleFont)
-					.foregroundStyle(Color(nsColor: .tertiaryLabelColor))
-					.accessibilityAddTraits(.isHeader)
-			}
-
-			VStack(spacing: 0) {
-				ForEach(Array(section.rows.enumerated()), id: \.element.id) { position, indexed in
-					PromptSuggestionRowButton(
-						indexed: indexed,
-						isSelected: indexed.index == selectedIndex,
-						isCompact: isCompact,
-						showsDivider: position != section.rows.count - 1,
-						onSelect: onSelect
-					)
-					.id(indexed.index)
-				}
-			}
-		}
-	}
+private func makeCompactPreviewModel() -> PromptSuggestionViewModel {
+	let model = PromptSuggestionViewModel()
+	model.isCompact = true
+	model.updateItems([
+		PromptSuggestion(title: "Budget.xlsx", kind: .fileMention, section: "Recent files", symbolName: "tablecells"),
+		PromptSuggestion(title: "Q1 Plan.md", kind: .fileMention, section: "Recent files", symbolName: "doc.text"),
+		PromptSuggestion(title: "ProductRoadmap.pdf", kind: .fileMention, section: "Shared", symbolName: "doc.richtext"),
+		PromptSuggestion(title: "Interview Notes.txt", kind: .fileMention, section: "Shared", symbolName: "note.text"),
+	])
+	model.selectedIndex = 1
+	return model
 }
 
-private struct PromptSuggestionRowButton: View {
-	let indexed: PromptSuggestionIndexedItem
-	let isSelected: Bool
-	let isCompact: Bool
-	let showsDivider: Bool
-	let onSelect: (PromptSuggestionIndexedItem) -> Void
-
-	private var kindLabel: String {
-		switch indexed.item.kind {
-		case .variable?:
-			return "Variable suggestion"
-		case .fileMention?:
-			return "File suggestion"
-		case .command?:
-			return "Command suggestion"
-		case nil:
-			return "Suggestion"
-		}
-	}
-
-	private var accessibilityLabelText: String {
-		var parts = [kindLabel, indexed.item.title]
-		if let subtitle = indexed.item.subtitle, !subtitle.isEmpty {
-			parts.append(subtitle)
-		}
-		return parts.joined(separator: ", ")
-	}
-
-	private var accessibilityHintText: String {
-		"Press Return to select this suggestion."
-	}
-
-	var body: some View {
-		Button {
-			onSelect(indexed)
-		} label: {
-			PromptSuggestionRow(
-				item: indexed.item,
-				isSelected: isSelected,
-				isCompact: isCompact
-			)
-		}
-		.buttonStyle(.plain)
-		.overlay(alignment: .bottom) {
-			Divider()
-				.overlay(Color(nsColor: .separatorColor).opacity(0.5))
-				.opacity(showsDivider ? 1 : 0)
-		}
-		.accessibilityElement(children: .ignore)
-		.accessibilityLabel(accessibilityLabelText)
-		.accessibilityHint(accessibilityHintText)
-		.accessibilityAddTraits(isSelected ? .isSelected : [])
-	}
+private func makeStandardPreviewModel() -> PromptSuggestionViewModel {
+	let model = PromptSuggestionViewModel()
+	model.isCompact = false
+	model.updateItems([
+		PromptSuggestion(title: "Summarize", subtitle: "Generate a concise summary", kind: .command, section: "Commands", symbolName: "text.alignleft"),
+		PromptSuggestion(title: "Translate", subtitle: "Translate to another language", kind: .command, section: "Commands", symbolName: "globe"),
+		PromptSuggestion(title: "Fix Grammar", subtitle: "Correct grammar and spelling", kind: .command, section: "Editing", symbolName: "pencil.and.outline"),
+		PromptSuggestion(title: "Expand", subtitle: "Elaborate on the content", kind: .command, section: "Editing", symbolName: "arrow.up.left.and.arrow.down.right"),
+	])
+	model.selectedIndex = 2
+	return model
 }
 
-struct PromptSuggestionRow: View {
-	let item: PromptSuggestion
-	let isSelected: Bool
-	let isCompact: Bool
+#Preview("Compact Panel") {
+	PromptSuggestionListView(
+		model: makeCompactPreviewModel(),
+		onSelect: { _ in },
+		standardWidth: 320,
+		standardMaxHeight: 340,
+		compactWidth: 240,
+		compactMaxHeight: 260
+	)
+	.padding(20)
+}
 
-	private var primaryForeground: Color {
-		isSelected ? .white : Color(nsColor: .labelColor)
-	}
-
-	private var secondaryForeground: Color {
-		isSelected ? .white.opacity(0.92) : Color(nsColor: .secondaryLabelColor)
-	}
-
-	private var iconBackground: Color {
-		isSelected ? .white.opacity(0.22) : Color(nsColor: .controlBackgroundColor)
-	}
-
-	private var rowBackground: Color {
-		isSelected ? Color(nsColor: .controlAccentColor) : .clear
-	}
-
-	private var iconName: String {
-		if let symbolName = item.symbolName {
-			return symbolName
-		}
-		guard let kind = item.kind else { return "sparkle.magnifyingglass" }
-		switch kind {
-		case .variable:
-			return "text.cursor"
-		case .fileMention:
-			return "doc"
-		case .command:
-			return "bolt"
-		}
-	}
-
-	var body: some View {
-		HStack(alignment: .top, spacing: isCompact ? 8 : 10) {
-			Image(systemName: iconName)
-				.font(.system(size: isCompact ? 12 : 15, weight: .semibold))
-				.frame(width: isCompact ? 24 : 32, height: isCompact ? 24 : 32)
-				.background(
-					Circle()
-						.fill(iconBackground)
-				)
-				.foregroundStyle(primaryForeground)
-
-			VStack(alignment: .leading, spacing: 2) {
-				Text(item.title)
-					.font(.system(size: isCompact ? 15 : 17, weight: .semibold))
-					.foregroundStyle(primaryForeground)
-				if let subtitle = item.subtitle {
-					Text(subtitle)
-						.font(.system(size: isCompact ? 13 : 14, weight: .medium))
-						.foregroundStyle(secondaryForeground)
-				}
-			}
-			.frame(maxWidth: .infinity, alignment: .leading)
-		}
-		.padding(.horizontal, isCompact ? 6 : 8)
-		.padding(.vertical, isCompact ? 5 : 7)
-		.background(
-			RoundedRectangle(cornerRadius: isCompact ? 7 : 8, style: .continuous)
-				.fill(rowBackground)
-		)
-		.contentShape(.rect)
-	}
+#Preview("Standard Panel") {
+	PromptSuggestionListView(
+		model: makeStandardPreviewModel(),
+		onSelect: { _ in },
+		standardWidth: 320,
+		standardMaxHeight: 340,
+		compactWidth: 240,
+		compactMaxHeight: 260
+	)
+	.padding(20)
 }

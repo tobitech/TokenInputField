@@ -247,7 +247,7 @@ public struct PromptComposerView: NSViewRepresentable {
 				promptTextView.clearSuggestionTriggerHighlight()
 			}
 
-			suggestionController.update(items: items, anchorRange: trigger?.anchorRange)
+			suggestionController.update(items: items, anchorRange: trigger?.anchorRange, isCompact: trigger?.character == "@")
 		}
 
 		private func handleSelectedSuggestion(_ suggestion: PromptSuggestion) {

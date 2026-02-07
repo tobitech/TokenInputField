@@ -4,6 +4,7 @@ import Observation
 final class PromptSuggestionViewModel {
 	var items: [PromptSuggestion] = []
 	var selectedIndex: Int = 0
+	var isCompact: Bool = false
 
 	var selectedItem: PromptSuggestion? {
 		guard items.indices.contains(selectedIndex) else { return nil }
