@@ -529,7 +529,19 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 		variableEditorField.horizontalPadding = style.horizontalPadding
 		variableEditorField.verticalPadding = style.verticalPadding
 		variableEditorField.layer?.cornerRadius = style.cornerRadius
-		variableEditorField.placeholderString = variableEditorPlaceholderText(for: token)
+		if let placeholder = variableEditorPlaceholderText(for: token) {
+			variableEditorField.placeholderString = placeholder
+			variableEditorField.placeholderAttributedString = NSAttributedString(
+				string: placeholder,
+				attributes: [
+					.font: style.font,
+					.foregroundColor: TokenAttachmentCell.defaultTextColor(for: .variable)
+				]
+			)
+		} else {
+			variableEditorField.placeholderString = nil
+			variableEditorField.placeholderAttributedString = nil
+		}
 	}
 
 	private func resolvedVariableEditorStyle(for token: Token, tokenRange: NSRange) -> VariableEditorStyle {
@@ -604,7 +616,7 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 
 	private func preferredVariableEditorTextColor(tokenTextColor: NSColor, kind: TokenKind) -> NSColor {
 		guard kind == .variable else { return tokenTextColor }
-		return NSColor.controlAccentColor
+		return tokenTextColor
 	}
 
 	private func resolvedColor(_ color: NSColor) -> NSColor {
@@ -616,12 +628,14 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 
 	private func preferredVariableEditorWidth() -> CGFloat {
 		let font = variableEditorField.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
-		let display = variableEditorField.stringValue.isEmpty
+		let isShowingPlaceholder = variableEditorField.stringValue.isEmpty
+		let display = isShowingPlaceholder
 			? (variableEditorField.placeholderString ?? " ")
 			: variableEditorField.stringValue
 		let textWidth = ceil((display as NSString).size(withAttributes: [.font: font]).width)
 		let horizontalPadding = variableEditorField.horizontalPadding
-		return textWidth + (horizontalPadding * 2)
+		let caretAllowance: CGFloat = isShowingPlaceholder ? 3 : 0
+		return textWidth + (horizontalPadding * 2) + caretAllowance
 	}
 
 	private func positionVariableEditor(for tokenRange: NSRange, fallbackFrame: NSRect?) {
@@ -633,7 +647,7 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 
 		let style = activeVariableEditorStyle
 		frame = frame.integral
-		frame.size.width = max(44, preferredVariableEditorWidth())
+		frame.size.width = max(frame.size.width, preferredVariableEditorWidth())
 		frame.size.height = max(
 			frame.size.height,
 			TokenAttachmentCell.lineHeight(
