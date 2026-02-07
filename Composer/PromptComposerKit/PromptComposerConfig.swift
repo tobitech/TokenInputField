@@ -50,22 +50,40 @@ public struct PromptCommand: Identifiable {
 	}
 }
 
+/// Controls the size of the floating suggestion panel.
+///
+/// The panel has two display modes chosen automatically based on the trigger:
+/// - **Standard** — used for `/` slash-command suggestions. Rows include a title
+///   and subtitle, so the panel is wider and taller by default.
+/// - **Compact** — used for `@` file-mention suggestions. Rows are single-line,
+///   so the panel is narrower and shorter.
+///
+/// `width` sets a fixed panel width; `maxHeight` caps how tall the panel can
+/// grow — if there are fewer items the panel shrinks to fit its content.
+/// Values below the static minimums (``minimumWidth`` / ``minimumHeight``)
+/// are clamped automatically.
 public struct PromptSuggestionPanelSizing {
+	/// The smallest width the panel will accept (applied via ``clamped``).
 	public static let minimumWidth: CGFloat = 220
+	/// The smallest height the panel will accept (applied via ``clamped``).
 	public static let minimumHeight: CGFloat = 80
 
 	public static let `default` = PromptSuggestionPanelSizing()
 
-	public var standardWidth: CGFloat = 360
-	public var standardMaxHeight: CGFloat = 360
-	public var compactWidth: CGFloat = 328
-	public var compactMaxHeight: CGFloat = 300
+	/// Fixed width of the panel in standard (slash-command) mode.
+	public var standardWidth: CGFloat = 415
+	/// Maximum height of the panel in standard mode. The panel shrinks to fit when content is shorter.
+	public var standardMaxHeight: CGFloat = 275
+	/// Fixed width of the panel in compact (file-mention) mode.
+	public var compactWidth: CGFloat = 250
+	/// Maximum height of the panel in compact mode. The panel shrinks to fit when content is shorter.
+	public var compactMaxHeight: CGFloat = 335
 
 	public init(
-		standardWidth: CGFloat = 360,
-		standardMaxHeight: CGFloat = 360,
-		compactWidth: CGFloat = 328,
-		compactMaxHeight: CGFloat = 300
+		standardWidth: CGFloat = 415,
+		standardMaxHeight: CGFloat = 275,
+		compactWidth: CGFloat = 250,
+		compactMaxHeight: CGFloat = 335
 	) {
 		self.standardWidth = standardWidth
 		self.standardMaxHeight = standardMaxHeight
