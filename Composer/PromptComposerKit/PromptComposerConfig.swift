@@ -50,6 +50,48 @@ public struct PromptCommand: Identifiable {
 	}
 }
 
+public struct PromptSuggestionPanelSizing {
+	public static let minimumWidth: CGFloat = 220
+	public static let minimumHeight: CGFloat = 80
+
+	public static let `default` = PromptSuggestionPanelSizing()
+
+	public var standardWidth: CGFloat = 360
+	public var standardMaxHeight: CGFloat = 360
+	public var compactWidth: CGFloat = 328
+	public var compactMaxHeight: CGFloat = 300
+
+	public init(
+		standardWidth: CGFloat = 360,
+		standardMaxHeight: CGFloat = 360,
+		compactWidth: CGFloat = 328,
+		compactMaxHeight: CGFloat = 300
+	) {
+		self.standardWidth = standardWidth
+		self.standardMaxHeight = standardMaxHeight
+		self.compactWidth = compactWidth
+		self.compactMaxHeight = compactMaxHeight
+	}
+
+	public func width(compact: Bool) -> CGFloat {
+		compact ? compactWidth : standardWidth
+	}
+
+	public func maxHeight(compact: Bool) -> CGFloat {
+		compact ? compactMaxHeight : standardMaxHeight
+	}
+
+	/// Returns a copy with values clamped to the minimum constraints.
+	public var clamped: PromptSuggestionPanelSizing {
+		PromptSuggestionPanelSizing(
+			standardWidth: max(Self.minimumWidth, standardWidth),
+			standardMaxHeight: max(Self.minimumHeight, standardMaxHeight),
+			compactWidth: max(Self.minimumWidth, compactWidth),
+			compactMaxHeight: max(Self.minimumHeight, compactMaxHeight)
+		)
+	}
+}
+
 public struct PromptComposerConfig {
 	public enum GrowthDirection {
 		case down
@@ -117,13 +159,8 @@ public struct PromptComposerConfig {
 	/// Called when a run-command slash command is selected.
 	public var onCommandExecuted: ((PromptCommand) -> Void)? = nil
 
-	/// Suggestion panel sizing for non-compact lists (for example slash commands).
-	public var suggestionPanelWidth: CGFloat = 360
-	public var suggestionPanelMaxHeight: CGFloat = 360
-
-	/// Suggestion panel sizing for compact lists (for example @ mentions).
-	public var compactSuggestionPanelWidth: CGFloat = 328
-	public var compactSuggestionPanelMaxHeight: CGFloat = 300
+	/// Suggestion panel sizing for both standard (slash commands) and compact (@ mentions) modes.
+	public var suggestionPanelSizing: PromptSuggestionPanelSizing = .default
 	
 	public init() {}
 }

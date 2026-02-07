@@ -1,8 +1,8 @@
 import AppKit
 
 enum PromptSuggestionPanelPositioning {
-	private static let minimumWidth: CGFloat = 220
-	private static let minimumHeight: CGFloat = 80
+	private static let minimumWidth: CGFloat = PromptSuggestionPanelSizing.minimumWidth
+	private static let minimumHeight: CGFloat = PromptSuggestionPanelSizing.minimumHeight
 	private static let screenInset: CGFloat = 8
 	private static let anchorSpacing: CGFloat = 8
 

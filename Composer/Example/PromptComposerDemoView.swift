@@ -13,10 +13,12 @@ struct PromptComposerDemoView: View {
 		config.minVisibleLines = 1
 		config.maxVisibleLines = 10
 		config.growthDirection = .up
-		config.suggestionPanelWidth = 340
-		config.suggestionPanelMaxHeight = 280
-		config.compactSuggestionPanelWidth = 320
-		config.compactSuggestionPanelMaxHeight = 280
+		config.suggestionPanelSizing = PromptSuggestionPanelSizing(
+			standardWidth: 340,
+			standardMaxHeight: 280,
+			compactWidth: 320,
+			compactMaxHeight: 280
+		)
 		config.autoFocusFirstVariableTokenOnAppear = true
 		config.suggestFiles = { query in
 			Self.sampleFileSuggestions(matching: query)

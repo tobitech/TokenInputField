@@ -9,21 +9,18 @@ struct PromptSuggestionListView: View {
 
 	let model: PromptSuggestionViewModel
 	let onSelect: (PromptSuggestion) -> Void
-	let standardWidth: CGFloat
-	let standardMaxHeight: CGFloat
-	let compactWidth: CGFloat
-	let compactMaxHeight: CGFloat
+	let sizing: PromptSuggestionPanelSizing
 
 	private var isCompact: Bool {
 		model.isCompact
 	}
 
 	private var activeWidth: CGFloat {
-		isCompact ? compactWidth : standardWidth
+		sizing.width(compact: isCompact)
 	}
 
 	private var activeMaxHeight: CGFloat {
-		isCompact ? compactMaxHeight : standardMaxHeight
+		sizing.maxHeight(compact: isCompact)
 	}
 
 	private var panelBackground: some View {
@@ -178,10 +175,7 @@ private func makeStandardPreviewModel() -> PromptSuggestionViewModel {
 	PromptSuggestionListView(
 		model: makeCompactPreviewModel(),
 		onSelect: { _ in },
-		standardWidth: 320,
-		standardMaxHeight: 340,
-		compactWidth: 240,
-		compactMaxHeight: 260
+		sizing: .default
 	)
 	.padding(20)
 }
@@ -190,10 +184,7 @@ private func makeStandardPreviewModel() -> PromptSuggestionViewModel {
 	PromptSuggestionListView(
 		model: makeStandardPreviewModel(),
 		onSelect: { _ in },
-		standardWidth: 320,
-		standardMaxHeight: 340,
-		compactWidth: 240,
-		compactMaxHeight: 260
+		sizing: .default
 	)
 	.padding(20)
 }

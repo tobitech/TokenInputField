@@ -5,40 +5,29 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 	override var canBecomeKey: Bool { false }
 	override var canBecomeMain: Bool { false }
 }
-/*
- standardWidth: 320,
- standardMaxHeight: 340,
- compactWidth: 240,
- compactMaxHeight: 260
- */
 final class PromptSuggestionPanelController: NSObject {
 	private let panel: PromptSuggestionFloatingPanel
 	private let viewModel = PromptSuggestionViewModel()
 	private let hostingView: NSHostingView<PromptSuggestionListView>
 	private let windowObserver = PromptSuggestionWindowObserver()
 	private var anchorRange: NSRange?
-	private var standardWidth: CGFloat = 320
-	private var standardMaxHeight: CGFloat = 340
-	private var compactWidth: CGFloat = 240
-	private var compactMaxHeight: CGFloat = 260
+	private var sizing: PromptSuggestionPanelSizing = .default
 	private var isCompactMode: Bool = false
 
 	weak var textView: PromptComposerTextView?
 	var onSelectSuggestion: ((PromptSuggestion) -> Void)?
 
 	override init() {
+		let defaultSizing = PromptSuggestionPanelSizing.default
 		hostingView = NSHostingView(
 			rootView: Self.makeListView(
 				model: PromptSuggestionViewModel(),
 				onSelect: { _ in },
-				standardWidth: 360,
-				standardMaxHeight: 360,
-				compactWidth: 328,
-				compactMaxHeight: 300
+				sizing: defaultSizing
 			)
 		)
 		panel = PromptSuggestionFloatingPanel(
-			contentRect: NSRect(x: 0, y: 0, width: 360, height: 220),
+			contentRect: NSRect(x: 0, y: 0, width: defaultSizing.standardWidth, height: defaultSizing.standardMaxHeight),
 			styleMask: [.borderless, .nonactivatingPanel],
 			backing: .buffered,
 			defer: true
@@ -157,13 +146,11 @@ final class PromptSuggestionPanelController: NSObject {
 		}
 
 		let fittingSize = hostingView.fittingSize
-		let preferredWidth = isCompactMode ? compactWidth : standardWidth
-		let preferredMaxHeight = isCompactMode ? compactMaxHeight : standardMaxHeight
 		let frame = PromptSuggestionPanelPositioning.frame(
 			anchorRect: anchorRect,
 			fittingSize: fittingSize,
-			preferredWidth: preferredWidth,
-			preferredMaxHeight: preferredMaxHeight,
+			preferredWidth: sizing.width(compact: isCompactMode),
+			preferredMaxHeight: sizing.maxHeight(compact: isCompactMode),
 			screen: textView.window?.screen ?? NSScreen.main
 		)
 		panel.setFrame(frame, display: panel.isVisible)
@@ -172,11 +159,7 @@ final class PromptSuggestionPanelController: NSObject {
 	private func applySizingFromConfig(isCompact: Bool) {
 		isCompactMode = isCompact
 		guard let config = textView?.config else { return }
-
-		standardWidth = max(220, config.suggestionPanelWidth)
-		standardMaxHeight = max(80, config.suggestionPanelMaxHeight)
-		compactWidth = max(220, config.compactSuggestionPanelWidth)
-		compactMaxHeight = max(80, config.compactSuggestionPanelMaxHeight)
+		sizing = config.suggestionPanelSizing.clamped
 	}
 
 	private func rebuildListView() {
@@ -185,28 +168,19 @@ final class PromptSuggestionPanelController: NSObject {
 			onSelect: { [weak self] item in
 				self?.select(item)
 			},
-			standardWidth: standardWidth,
-			standardMaxHeight: standardMaxHeight,
-			compactWidth: compactWidth,
-			compactMaxHeight: compactMaxHeight
+			sizing: sizing
 		)
 	}
 
 	private static func makeListView(
 		model: PromptSuggestionViewModel,
 		onSelect: @escaping (PromptSuggestion) -> Void,
-		standardWidth: CGFloat,
-		standardMaxHeight: CGFloat,
-		compactWidth: CGFloat,
-		compactMaxHeight: CGFloat
+		sizing: PromptSuggestionPanelSizing
 	) -> PromptSuggestionListView {
 		PromptSuggestionListView(
 			model: model,
 			onSelect: onSelect,
-			standardWidth: standardWidth,
-			standardMaxHeight: standardMaxHeight,
-			compactWidth: compactWidth,
-			compactMaxHeight: compactMaxHeight
+			sizing: sizing
 		)
 	}
 }
