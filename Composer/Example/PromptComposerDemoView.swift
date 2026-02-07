@@ -62,15 +62,60 @@ struct PromptComposerDemoView: View {
 	private static func sampleAttributedText() -> NSAttributedString {
 		let document = PromptDocument(segments: [
 			.text("Generate a high-resolution, professional headshot suitable for a corporate profile picture. The subject should be looking directly at the camera with a "),
-			.token(Token(kind: .variable, display: "confident", metadata: ["key": "expression"])),
+			.token(
+				Token(
+					kind: .variable,
+					display: "confident",
+					metadata: [
+						"key": "expression",
+						"placeholder": "confident"
+					]
+				)
+			),
 			.text(" expression. The lighting should be "),
-			.token(Token(kind: .variable, display: "soft and even", metadata: ["key": "lighting"])),
+			.token(
+				Token(
+					kind: .variable,
+					display: "soft and even",
+					metadata: [
+						"key": "lighting",
+						"placeholder": "soft and even"
+					]
+				)
+			),
 			.text(", and the background should be a solid neutral color like "),
-			.token(Token(kind: .variable, display: "light gray", metadata: ["key": "backgroundColor"])),
+			.token(
+				Token(
+					kind: .variable,
+					display: "light gray",
+					metadata: [
+						"key": "backgroundColor",
+						"placeholder": "light gray"
+					]
+				)
+			),
 			.text(". The final image should be in a "),
-			.token(Token(kind: .variable, display: "realistic", metadata: ["key": "style"])),
+			.token(
+				Token(
+					kind: .variable,
+					display: "realistic",
+					metadata: [
+						"key": "style",
+						"placeholder": "realistic"
+					]
+				)
+			),
 			.text(" style, suitable for "),
-			.token(Token(kind: .variable, display: "LinkedIn", metadata: ["key": "audience"])),
+			.token(
+				Token(
+					kind: .variable,
+					display: "LinkedIn",
+					metadata: [
+						"key": "audience",
+						"placeholder": "LinkedIn"
+					]
+				)
+			),
 			.text(".")
 		])
 		return document.buildAttributedString(
