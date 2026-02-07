@@ -192,6 +192,7 @@ extension PromptComposerTextView {
 		defer { isTransitioningToVariableEditor = false }
 		guard window.makeFirstResponder(variableEditorField) else { return }
 		if let editor = window.fieldEditor(true, for: variableEditorField) as? NSTextView {
+			editor.textContainer?.lineFragmentPadding = 0
 			editor.insertionPointColor = NSColor.controlAccentColor
 			editor.drawsBackground = false
 			editor.backgroundColor = .clear
