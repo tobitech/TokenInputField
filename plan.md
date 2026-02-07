@@ -57,11 +57,32 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
 
 ## Phase 3 — Advanced UX
 
-- [ ] Step 9 — Variable token editing overlay
+- [x] Step 9 — Variable token editing overlay ✅
   - Draw pills, but edit via a shared `NSTextField` overlay.
   - Position via TextKit 2 layout fragments.
   - Commit edits back into token metadata and redraw.
   - Done when: clicking a variable pill edits and updates it.
+  - Manual QA checklist:
+    - [ ] Click a variable token pill.
+      - Expected: an inline editor appears on top of the pill, gains focus, and selects the existing value.
+    - [ ] Type a new value and press `Return`.
+      - Expected: editor closes, pill label updates, and caret returns to the composer.
+    - [ ] Type a new value and press `Tab`.
+      - Expected: same as `Return` (commit + close).
+    - [ ] Start editing, then press `Esc`.
+      - Expected: editor closes without changing the pill text.
+    - [ ] Start editing, then click elsewhere in the composer.
+      - Expected: edit commits once and no duplicate editor appears.
+    - [ ] Start editing, clear the field, and commit.
+      - Expected: token keeps its previous non-empty display value.
+    - [ ] Click a non-variable token (file/command).
+      - Expected: variable editor does not open.
+    - [ ] Resize the composer or scroll while editing.
+      - Expected: editor stays aligned with the token.
+    - [ ] Edit a variable token on a wrapped/multi-line line.
+      - Expected: overlay positioning remains correct and commit still updates the right token.
+    - [ ] Perform `Undo` then `Redo` after a committed edit.
+      - Expected: token display change reverses and reapplies correctly.
 
 - [ ] Step 10 — Serialization (import/export)
   - Export tokens as placeholders: `{{var}}` and `@{file:uuid|name}`.

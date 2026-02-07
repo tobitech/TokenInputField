@@ -110,6 +110,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			if parent.state.selectedRange != selectedRange {
 				parent.state.selectedRange = selectedRange
 			}
+			tv.refreshVariableEditorLayoutIfNeeded()
 			scrollView?.updateHeight()
 			updateSuggestions(for: tv)
 		}
@@ -128,6 +129,8 @@ public struct PromptComposerView: NSViewRepresentable {
 					self.parent.state.selectedRange = selectedRange
 				}
 				if let tv {
+					tv.handleSelectionDidChange()
+					tv.refreshVariableEditorLayoutIfNeeded()
 					self.updateSuggestions(for: tv)
 				}
 			}
@@ -147,6 +150,22 @@ public struct PromptComposerView: NSViewRepresentable {
 			return promptTextView.adjustedSelectionRange(
 				from: oldSelectedCharRange,
 				to: newSelectedCharRange
+			)
+		}
+
+		public func textView(
+			_ textView: NSTextView,
+			clickedOn cell: any NSTextAttachmentCellProtocol,
+			in cellFrame: NSRect,
+			at charIndex: Int
+		) {
+			guard !isApplyingSwiftUIUpdate,
+				let promptTextView = textView as? PromptComposerTextView
+			else { return }
+
+			promptTextView.beginVariableTokenEditing(
+				at: charIndex,
+				suggestedCellFrame: cellFrame
 			)
 		}
 

@@ -1,12 +1,41 @@
 import AppKit
 import Foundation
 
-final class PromptComposerTextView: NSTextView {
+final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 	var config: PromptComposerConfig = .init() {
 		didSet { applyConfig() }
 	}
 	
 	var suggestionController: PromptSuggestionPanelController?
+
+	private struct ActiveVariableEditorContext {
+		let range: NSRange
+		let token: Token
+	}
+
+	private var activeVariableEditorContext: ActiveVariableEditorContext?
+	private var isCommittingVariableEdit = false
+	private var isTransitioningToVariableEditor = false
+
+	private lazy var variableEditorField: NSTextField = {
+		let field = NSTextField()
+		field.isBordered = false
+		field.isBezeled = false
+		field.focusRingType = .none
+		field.drawsBackground = true
+		field.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.18)
+		field.textColor = .labelColor
+		field.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+		field.cell?.lineBreakMode = .byClipping
+		field.delegate = self
+		field.isHidden = true
+		field.wantsLayer = true
+		field.layer?.cornerRadius = TokenAttachmentCell.defaultCornerRadius
+		field.layer?.masksToBounds = true
+		field.layer?.borderWidth = 1
+		field.layer?.borderColor = NSColor.controlAccentColor.withAlphaComponent(0.28).cgColor
+		return field
+	}()
 
 	override init(frame frameRect: NSRect, textContainer container: NSTextContainer?) {
 		if let container {
@@ -74,6 +103,10 @@ final class PromptComposerTextView: NSTextView {
 
 		// Optional submit-on-enter behaviour.
 		setUpSubmitKeyHandlingIfNeeded()
+
+		if activeVariableEditorContext != nil {
+			refreshVariableEditorLayoutIfNeeded()
+		}
 	}
 
 	private func setUpSubmitKeyHandlingIfNeeded() {
@@ -105,8 +138,16 @@ final class PromptComposerTextView: NSTextView {
 		let didResign = super.resignFirstResponder()
 		if didResign {
 			suggestionController?.dismiss()
+			if !isTransitioningToVariableEditor {
+				commitVariableEditorChanges()
+			}
 		}
 		return didResign
+	}
+
+	override func layout() {
+		super.layout()
+		refreshVariableEditorLayoutIfNeeded()
 	}
 
 	func suggestionAnchorScreenRect(for triggerRange: NSRange?) -> NSRect? {
@@ -132,6 +173,77 @@ final class PromptComposerTextView: NSTextView {
 	}
 
 	// MARK: - Token editing
+
+	func beginVariableTokenEditing(at charIndex: Int, suggestedCellFrame: NSRect?) {
+		guard let storage = textStorage, storage.length > 0 else { return }
+
+		let clampedIndex = min(max(0, charIndex), storage.length - 1)
+		guard let context = variableTokenContext(containing: clampedIndex, in: storage) else {
+			cancelVariableEditor()
+			return
+		}
+
+		if let active = activeVariableEditorContext, active.range == context.range {
+			positionVariableEditor(for: active.range, fallbackFrame: suggestedCellFrame)
+			focusVariableEditorField()
+			return
+		}
+
+		if activeVariableEditorContext != nil {
+			commitVariableEditorChanges()
+		}
+
+		activeVariableEditorContext = context
+		configureVariableEditorField(for: context.token)
+		variableEditorField.stringValue = context.token.display
+		if variableEditorField.superview !== self {
+			addSubview(variableEditorField)
+		}
+		positionVariableEditor(for: context.range, fallbackFrame: suggestedCellFrame)
+		variableEditorField.isHidden = false
+		focusVariableEditorField()
+	}
+
+	func refreshVariableEditorLayoutIfNeeded() {
+		guard let active = activeVariableEditorContext else { return }
+		positionVariableEditor(for: active.range, fallbackFrame: nil)
+	}
+
+	func handleSelectionDidChange() {
+		guard let active = activeVariableEditorContext else { return }
+		let selection = selectedRange()
+		let range = active.range
+		let intersectsToken = NSIntersectionRange(selection, range).length > 0
+		let sitsAtTokenBoundary = selection.length == 0
+			&& (selection.location == range.location || selection.location == range.location + range.length)
+
+		if !intersectsToken && !sitsAtTokenBoundary {
+			commitVariableEditorChanges()
+		}
+	}
+
+	func commitVariableEditorChanges() {
+		guard !isCommittingVariableEdit else { return }
+		guard let active = activeVariableEditorContext else { return }
+		guard !variableEditorField.isHidden else {
+			activeVariableEditorContext = nil
+			return
+		}
+
+		isCommittingVariableEdit = true
+		defer { isCommittingVariableEdit = false }
+
+		let rawDisplay = variableEditorField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+		let updatedDisplay = rawDisplay.isEmpty ? active.token.display : rawDisplay
+		let updatedToken = makeUpdatedVariableToken(from: active.token, display: updatedDisplay)
+		replaceVariableToken(updatedToken, in: active.range)
+		hideVariableEditorField()
+		window?.makeFirstResponder(self)
+	}
+
+	func cancelVariableEditor() {
+		hideVariableEditorField()
+	}
 
 	func adjustedSelectionRange(from oldRange: NSRange, to proposedRange: NSRange) -> NSRange {
 		guard let storage = textStorage, storage.length > 0 else {
@@ -224,6 +336,161 @@ final class PromptComposerTextView: NSTextView {
 		return nil
 	}
 
+	private func variableTokenContext(
+		containing location: Int,
+		in textStorage: NSTextStorage
+	) -> ActiveVariableEditorContext? {
+		guard location >= 0, location < textStorage.length else { return nil }
+
+		var effectiveRange = NSRange(location: 0, length: 0)
+
+		if
+			let attachment = textStorage.attribute(.attachment, at: location, effectiveRange: &effectiveRange) as? TokenAttachment,
+			attachment.token.kind == .variable
+		{
+			return ActiveVariableEditorContext(range: effectiveRange, token: attachment.token)
+		}
+
+		if
+			let tokenAttribute = textStorage.attribute(.promptToken, at: location, effectiveRange: &effectiveRange) as? PromptTokenAttribute,
+			tokenAttribute.token.kind == .variable
+		{
+			return ActiveVariableEditorContext(range: effectiveRange, token: tokenAttribute.token)
+		}
+
+		return nil
+	}
+
+	private func configureVariableEditorField(for token: Token) {
+		let fallbackFont = font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+		let editorFont = (typingAttributes[.font] as? NSFont) ?? fallbackFont
+		let editorTextColor = (typingAttributes[.foregroundColor] as? NSColor) ?? textColor ?? .labelColor
+
+		variableEditorField.font = editorFont
+		variableEditorField.textColor = editorTextColor
+		variableEditorField.placeholderString = token.display.isEmpty ? "Variable" : nil
+	}
+
+	private func positionVariableEditor(for tokenRange: NSRange, fallbackFrame: NSRect?) {
+		let frame = variableEditorFrame(for: tokenRange) ?? fallbackFrame
+		guard var frame else {
+			hideVariableEditorField()
+			return
+		}
+
+		frame = frame.integral
+		frame.size.width = max(44, frame.size.width)
+		frame.size.height = max(TokenAttachmentCell.lineHeight(for: config.font), frame.size.height)
+		variableEditorField.frame = frame
+	}
+
+	private func variableEditorFrame(for tokenRange: NSRange) -> NSRect? {
+		guard
+			let textLayoutManager,
+			let textContentStorage = textLayoutManager.textContentManager as? NSTextContentStorage
+		else {
+			return fallbackEditorFrame(for: tokenRange)
+		}
+
+		let textLength = string.utf16.count
+		let clampedRange = clampRange(tokenRange, length: textLength)
+		guard clampedRange.length > 0 else {
+			return fallbackEditorFrame(for: clampedRange)
+		}
+
+		let documentRange = textContentStorage.documentRange
+		guard let attachmentLocation = textContentStorage.location(documentRange.location, offsetBy: clampedRange.location) else {
+			return fallbackEditorFrame(for: clampedRange)
+		}
+
+		let attachmentRange = NSTextRange(location: attachmentLocation)
+		textLayoutManager.ensureLayout(for: attachmentRange)
+
+		var attachmentFrame: CGRect?
+		_ = textLayoutManager.enumerateTextLayoutFragments(from: attachmentLocation, options: []) { fragment in
+			let frameInFragment = fragment.frameForTextAttachment(at: attachmentLocation)
+			guard !frameInFragment.isEmpty else { return true }
+
+			attachmentFrame = frameInFragment.offsetBy(
+				dx: fragment.layoutFragmentFrame.origin.x,
+				dy: fragment.layoutFragmentFrame.origin.y
+			)
+			return false
+		}
+
+		if let attachmentFrame, !attachmentFrame.isEmpty {
+			return attachmentFrame
+		}
+
+		return fallbackEditorFrame(for: clampedRange)
+	}
+
+	private func fallbackEditorFrame(for tokenRange: NSRange) -> NSRect? {
+		guard tokenRange.length > 0 else { return nil }
+		let screenRect = firstRect(forCharacterRange: tokenRange, actualRange: nil).standardized
+		guard let window else { return nil }
+		let windowRect = window.convertFromScreen(screenRect)
+		return convert(windowRect, from: nil)
+	}
+
+	private func makeUpdatedVariableToken(from token: Token, display: String) -> Token {
+		var updated = token
+		updated.display = display
+		updated.metadata["value"] = display
+		return updated
+	}
+
+	private func replaceVariableToken(_ token: Token, in range: NSRange) {
+		guard let textStorage, textStorage.length > 0 else { return }
+
+		let clampedRange = clampRange(range, length: textStorage.length)
+		guard clampedRange.length > 0 else { return }
+		guard let currentContext = variableTokenContext(containing: clampedRange.location, in: textStorage) else { return }
+		let tokenRange = currentContext.range
+
+		let currentAttributes = textStorage.attributes(at: tokenRange.location, effectiveRange: nil)
+		let tokenFont = (currentAttributes[.font] as? NSFont) ?? config.font
+		let tokenTextColor = (currentAttributes[.foregroundColor] as? NSColor) ?? config.textColor
+
+		let attachment = TokenAttachment(token: token)
+		attachment.attachmentCell = TokenAttachmentCell(
+			token: token,
+			font: tokenFont,
+			textColor: tokenTextColor
+		)
+
+		let replacement = NSMutableAttributedString(attachment: attachment)
+		var copiedAttributes = currentAttributes
+		copiedAttributes.removeValue(forKey: .attachment)
+		copiedAttributes.removeValue(forKey: .promptToken)
+		if !copiedAttributes.isEmpty {
+			replacement.addAttributes(
+				copiedAttributes,
+				range: NSRange(location: 0, length: replacement.length)
+			)
+		}
+
+		guard shouldChangeText(in: tokenRange, replacementString: replacement.string) else { return }
+
+		textStorage.replaceCharacters(in: tokenRange, with: replacement)
+		didChangeText()
+		setSelectedRange(NSRange(location: tokenRange.location + replacement.length, length: 0))
+	}
+
+	private func hideVariableEditorField() {
+		activeVariableEditorContext = nil
+		variableEditorField.isHidden = true
+		variableEditorField.stringValue = ""
+	}
+
+	private func focusVariableEditorField() {
+		guard let window else { return }
+		isTransitioningToVariableEditor = true
+		defer { isTransitioningToVariableEditor = false }
+		guard window.makeFirstResponder(variableEditorField) else { return }
+		variableEditorField.currentEditor()?.selectAll(nil)
+	}
+
 	private func expandedTokenRange(for range: NSRange, in textStorage: NSTextStorage) -> NSRange {
 		let clamped = clampRange(range, length: textStorage.length)
 		guard clamped.length > 0 else { return clamped }
@@ -248,5 +515,26 @@ final class PromptComposerTextView: NSTextView {
 		let maxLength = max(0, length - clampedLocation)
 		let clampedLength = min(max(0, range.length), maxLength)
 		return NSRange(location: clampedLocation, length: clampedLength)
+	}
+
+	// MARK: - NSTextFieldDelegate
+
+	func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+		switch commandSelector {
+		case #selector(NSResponder.insertNewline(_:)), #selector(NSResponder.insertTab(_:)):
+			commitVariableEditorChanges()
+			return true
+		case #selector(NSResponder.cancelOperation(_:)):
+			cancelVariableEditor()
+			window?.makeFirstResponder(self)
+			return true
+		default:
+			return false
+		}
+	}
+
+	func controlTextDidEndEditing(_ obj: Notification) {
+		guard activeVariableEditorContext != nil else { return }
+		commitVariableEditorChanges()
 	}
 }
