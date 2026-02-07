@@ -237,6 +237,16 @@ public struct PromptComposerView: NSViewRepresentable {
 				items = []
 			}
 
+			if let trigger, !items.isEmpty {
+				promptTextView.updateSuggestionTriggerHighlight(
+					range: trigger.replacementRange,
+					character: trigger.character,
+					hasQuery: !trigger.query.isEmpty
+				)
+			} else {
+				promptTextView.clearSuggestionTriggerHighlight()
+			}
+
 			suggestionController.update(items: items, anchorRange: trigger?.anchorRange)
 		}
 
@@ -251,6 +261,8 @@ public struct PromptComposerView: NSViewRepresentable {
 			else {
 				return
 			}
+
+			textView.clearSuggestionTriggerHighlight()
 
 			switch trigger.character {
 			case "@":

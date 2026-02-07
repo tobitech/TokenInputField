@@ -27,6 +27,8 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 		let cornerRadius: CGFloat
 	}
 
+	var suggestionTriggerHighlight: SuggestionTriggerHighlight?
+
 	var activeVariableEditorContext: ActiveVariableEditorContext?
 	var isCommittingVariableEdit = false
 	var isTransitioningToVariableEditor = false
@@ -230,6 +232,16 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 	override func layout() {
 		super.layout()
 		refreshVariableEditorLayoutIfNeeded()
+	}
+
+	override func drawBackground(in rect: NSRect) {
+		super.drawBackground(in: rect)
+		drawSuggestionTriggerBackground(in: rect)
+	}
+
+	override func draw(_ dirtyRect: NSRect) {
+		super.draw(dirtyRect)
+		drawSuggestionTriggerPlaceholder(in: dirtyRect)
 	}
 
 	func suggestionAnchorScreenRect(for triggerRange: NSRange?) -> NSRect? {
