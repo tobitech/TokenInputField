@@ -4,21 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Composer is a native macOS prompt editor component built with Swift, using AppKit (TextKit 2) for the core text editing engine and a thin SwiftUI wrapper (`NSViewRepresentable`) for embedding. It supports inline tokens (variable placeholders, `@` file mentions, `/` slash commands), a floating suggestion panel, and variable token editing via overlay text fields.
+PromptComposer is a Swift Package providing a native macOS prompt editor component built with AppKit (TextKit 2) and a thin SwiftUI wrapper (`NSViewRepresentable`). It supports inline tokens (variable placeholders, `@` file mentions, `/` slash commands), a floating suggestion panel, and variable token editing via overlay text fields.
 
 ## Build & Development
 
 ```bash
-# Build (Debug)
-xcodebuild -project Composer.xcodeproj -scheme Composer -configuration Debug build
+# Build the library (SPM)
+swift build
 
-# Run tests (when added)
-xcodebuild -project Composer.xcodeproj -scheme Composer test
+# Build with Xcode
+xcodebuild -scheme PromptComposer build
+
+# Validate package manifest
+swift package dump-package
 ```
 
-Prefer using the `XcodeBuildMCP` server to run builds when available so compile status can be verified programmatically. To run the app, open `Composer.xcodeproj` in Xcode and press Run.
+To run the Example app, open `Example/ComposerExample/ComposerExample.xcodeproj` in Xcode and press Run. The Example project references the local package at `../../`.
 
-**Target:** macOS 26.1, Swift 5.0, Bundle ID: `com.oluwatobiomotayo.Composer`
+Prefer using the `XcodeBuildMCP` server to run builds when available so compile status can be verified programmatically.
+
+**Target:** macOS 15+, Swift 6.0 toolchain
 
 No automated tests exist yet. If adding tests, use XCTest in a new test target with descriptive names (e.g., `testInsertsTokenAsAttachment`).
 
@@ -28,7 +33,7 @@ No formatter or linter is configured. Follow Xcode defaults and match adjacent c
 
 - UpperCamelCase for types, lowerCamelCase for methods/properties
 - Indentation: tabs, 1 tab per level
-- Keep files small and focused; prefer separate types/extensions in `PromptComposerKit/` over monolithic files
+- Keep files small and focused; prefer separate types/extensions in `Sources/PromptComposer/` over monolithic files
 
 ## Architecture
 
@@ -55,18 +60,30 @@ Clicking a variable token opens an inline `NSTextField` overlay (`VariableTokenE
 - `+VariableEditorField` — VariableTokenEditorField subclass
 - `+VariableEditorStyleLayout` — overlay positioning/styling
 
+### Package structure
+
+```
+PromptComposer/                          (repo root)
+├── Package.swift
+├── Sources/
+│   └── PromptComposer/                  (library target)
+├── Example/
+│   └── ComposerExample/                 (standalone Xcode app)
+│       └── ComposerExample.xcodeproj
+```
+
 ### Key files
 
 | File | Role |
 |------|------|
-| `PromptComposerView.swift` | SwiftUI wrapper + Coordinator (delegate, suggestion trigger detection, token insertion) |
-| `PromptComposerTextView.swift` | Core AppKit text editor |
-| `PromptComposerConfig.swift` | Configuration struct + `PromptCommand` model |
-| `PromptDocument.swift` | Document model + placeholder serialization |
-| `PromptDocument+AttributedString.swift` | NSAttributedString ↔ PromptDocument conversion |
-| `TokenAttachmentCell.swift` | Custom pill-style token rendering |
-| `PromptSuggestionPopover.swift` | Floating suggestion panel controller |
-| `PromptComposerDemoView.swift` | Demo UI with sample data (in `Example/`) |
+| `Sources/PromptComposer/PromptComposerView.swift` | SwiftUI wrapper + Coordinator (delegate, suggestion trigger detection, token insertion) |
+| `Sources/PromptComposer/PromptComposerTextView.swift` | Core AppKit text editor |
+| `Sources/PromptComposer/PromptComposerConfig.swift` | Configuration struct + `PromptCommand` model |
+| `Sources/PromptComposer/PromptDocument.swift` | Document model + placeholder serialization |
+| `Sources/PromptComposer/PromptDocument+AttributedString.swift` | NSAttributedString ↔ PromptDocument conversion |
+| `Sources/PromptComposer/TokenAttachmentCell.swift` | Custom pill-style token rendering |
+| `Sources/PromptComposer/PromptSuggestionPopover.swift` | Floating suggestion panel controller |
+| `Example/ComposerExample/PromptComposerDemoView.swift` | Demo UI with sample data |
 
 ## Animation Guidelines
 

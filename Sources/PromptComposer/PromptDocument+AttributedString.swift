@@ -70,7 +70,7 @@ public final class TokenAttachment: NSTextAttachment {
 }
 
 public extension PromptDocument {
-	func buildAttributedString(
+	@MainActor func buildAttributedString(
 		baseAttributes: [NSAttributedString.Key: Any] = [:],
 		usesAttachments: Bool = false
 	) -> NSAttributedString {

@@ -1,6 +1,6 @@
 import AppKit
 
-final class PromptSuggestionWindowObserver {
+@MainActor final class PromptSuggestionWindowObserver {
 	private weak var observedWindow: NSWindow?
 	private var windowObservers: [NSObjectProtocol] = []
 	private var onChange: (() -> Void)?
@@ -38,6 +38,8 @@ final class PromptSuggestionWindowObserver {
 	}
 
 	deinit {
-		invalidate()
+		MainActor.assumeIsolated {
+			invalidate()
+		}
 	}
 }

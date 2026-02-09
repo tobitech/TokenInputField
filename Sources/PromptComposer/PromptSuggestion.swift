@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PromptSuggestion: Identifiable, Equatable {
+public struct PromptSuggestion: Identifiable, Equatable, Sendable {
 	public var id: UUID
 	public var title: String
 	public var subtitle: String?
@@ -25,7 +25,7 @@ public struct PromptSuggestion: Identifiable, Equatable {
 	}
 }
 
-public struct PromptSuggestionContext: Equatable {
+public struct PromptSuggestionContext: Equatable, Sendable {
 	public var text: String
 	public var selectedRange: NSRange
 	public var triggerCharacter: Character?

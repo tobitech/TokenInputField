@@ -145,7 +145,7 @@ struct PromptSuggestionListView: View {
 	}
 }
 
-private func makeCompactPreviewModel() -> PromptSuggestionViewModel {
+@MainActor private func makeCompactPreviewModel() -> PromptSuggestionViewModel {
 	let model = PromptSuggestionViewModel()
 	model.isCompact = true
 	model.updateItems([
@@ -158,7 +158,7 @@ private func makeCompactPreviewModel() -> PromptSuggestionViewModel {
 	return model
 }
 
-private func makeStandardPreviewModel() -> PromptSuggestionViewModel {
+@MainActor private func makeStandardPreviewModel() -> PromptSuggestionViewModel {
 	let model = PromptSuggestionViewModel()
 	model.isCompact = false
 	model.updateItems([

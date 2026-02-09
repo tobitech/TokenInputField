@@ -1,6 +1,6 @@
 import Observation
 
-@Observable
+@MainActor @Observable
 final class PromptSuggestionViewModel {
 	var items: [PromptSuggestion] = []
 	var selectedIndex: Int = 0

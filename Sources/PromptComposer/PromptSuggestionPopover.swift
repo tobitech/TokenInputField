@@ -5,7 +5,7 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 	override var canBecomeKey: Bool { false }
 	override var canBecomeMain: Bool { false }
 }
-final class PromptSuggestionPanelController: NSObject {
+@MainActor final class PromptSuggestionPanelController: NSObject {
 	private let panel: PromptSuggestionFloatingPanel
 	private let viewModel = PromptSuggestionViewModel()
 	private let hostingView: NSHostingView<PromptSuggestionListView>
@@ -43,7 +43,9 @@ final class PromptSuggestionPanelController: NSObject {
 	}
 
 	deinit {
-		windowObserver.invalidate()
+		MainActor.assumeIsolated {
+			windowObserver.invalidate()
+		}
 	}
 
 	func update(items: [PromptSuggestion], anchorRange: NSRange?, isCompact: Bool) {

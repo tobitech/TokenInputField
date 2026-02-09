@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PromptDocument: Equatable, Codable {
+public struct PromptDocument: Equatable, Codable, Sendable {
 	public var segments: [Segment]
 
 	public init(segments: [Segment] = []) {
@@ -8,7 +8,7 @@ public struct PromptDocument: Equatable, Codable {
 	}
 }
 
-public enum Segment: Equatable, Codable {
+public enum Segment: Equatable, Codable, Sendable {
 	case text(String)
 	case token(Token)
 
@@ -49,7 +49,7 @@ public enum Segment: Equatable, Codable {
 	}
 }
 
-public struct Token: Equatable, Codable, Identifiable {
+public struct Token: Equatable, Codable, Identifiable, Sendable {
 	public var id: UUID
 	public var kind: TokenKind
 	public var display: String
@@ -68,7 +68,7 @@ public struct Token: Equatable, Codable, Identifiable {
 	}
 }
 
-public enum TokenKind: String, Codable {
+public enum TokenKind: String, Codable, Sendable {
 	case variable
 	case fileMention
 	case command

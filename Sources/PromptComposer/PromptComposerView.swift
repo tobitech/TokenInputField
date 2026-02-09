@@ -83,7 +83,7 @@ public struct PromptComposerView: NSViewRepresentable {
 
 	// MARK: - Coordinator
 
-	public final class Coordinator: NSObject, NSTextViewDelegate {
+	@MainActor public final class Coordinator: NSObject, NSTextViewDelegate {
 		fileprivate let parent: PromptComposerView
 		fileprivate weak var textView: PromptComposerTextView?
 		fileprivate weak var scrollView: PromptComposerScrollView?

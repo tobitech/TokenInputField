@@ -1,8 +1,8 @@
 import AppKit
 import Foundation
 
-public struct PromptCommand: Identifiable {
-	public enum Mode {
+public struct PromptCommand: Identifiable, Sendable {
+	public enum Mode: Sendable {
 		case insertToken
 		case runCommand
 	}
@@ -62,7 +62,7 @@ public struct PromptCommand: Identifiable {
 /// grow — if there are fewer items the panel shrinks to fit its content.
 /// Values below the static minimums (``minimumWidth`` / ``minimumHeight``)
 /// are clamped automatically.
-public struct PromptSuggestionPanelSizing {
+public struct PromptSuggestionPanelSizing: Sendable {
 	/// The smallest width the panel will accept (applied via ``clamped``).
 	public static let minimumWidth: CGFloat = 220
 	/// The smallest height the panel will accept (applied via ``clamped``).
@@ -111,7 +111,7 @@ public struct PromptSuggestionPanelSizing {
 }
 
 public struct PromptComposerConfig {
-	public enum GrowthDirection {
+	public enum GrowthDirection: Sendable {
 		case down
 		case up
 	}
