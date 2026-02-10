@@ -147,6 +147,11 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 			return
 		}
 
+		// Force the hosting view to recalculate its intrinsic content size
+		// after a rootView update, preventing stale sizes when the panel
+		// is re-shown after being closed.
+		hostingView.invalidateIntrinsicContentSize()
+		hostingView.layoutSubtreeIfNeeded()
 		let fittingSize = hostingView.fittingSize
 		let frame = PromptSuggestionPanelPositioning.frame(
 			anchorRect: anchorRect,
