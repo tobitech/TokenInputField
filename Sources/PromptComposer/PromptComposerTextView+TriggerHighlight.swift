@@ -39,13 +39,17 @@ extension PromptComposerTextView {
 		let windowRect = window.convertFromScreen(screenRect)
 		var localRect = convert(windowRect, from: nil)
 
-		// When showing ghost text, extend the background to cover it.
+		// When showing ghost text, extend the background to cover it
+		// only if there's enough space to display the placeholder.
 		if !highlight.hasQuery, NSMaxRange(highlight.range) >= length {
 			let font = self.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
 			let placeholderSize = (Self.placeholderText as NSString).size(
 				withAttributes: [.font: font]
 			)
-			localRect.size.width += placeholderSize.width + 1
+			let availableWidth = bounds.maxX - textContainerInset.width - localRect.maxX
+			if availableWidth >= placeholderSize.width + 1 {
+				localRect.size.width += placeholderSize.width + 1
+			}
 		}
 
 		// Pad the highlight for a pill-like appearance.
@@ -84,6 +88,11 @@ extension PromptComposerTextView {
 			.font: font,
 			.foregroundColor: NSColor.tertiaryLabelColor,
 		]
+
+		// Check if there's enough space to draw the placeholder.
+		let placeholderWidth = placeholderText.size(withAttributes: attributes).width
+		let availableWidth = bounds.maxX - textContainerInset.width - (localRect.origin.x + 1)
+		guard availableWidth >= placeholderWidth else { return }
 
 		let lineHeight = localRect.height
 		let textHeight = font.ascender - font.descender
