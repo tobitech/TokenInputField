@@ -9,6 +9,7 @@ enum UseCase: String, CaseIterable, Identifiable {
 	case customTriggerUI = "Custom Trigger UI"
 	case promptField = "Prompt Field"
 	case projectsField = "Projects Field"
+	case toolsField = "Tools Field"
 	case kitchenSink = "Kitchen Sink"
 
 	var id: String { rawValue }
@@ -31,6 +32,8 @@ enum UseCase: String, CaseIterable, Identifiable {
 			"Pre-filled token with styled pill"
 		case .projectsField:
 			"Dismissible token with description"
+		case .toolsField:
+			"App tokens with @ trigger and tools bar"
 		case .kitchenSink:
 			"All features combined"
 		}
@@ -46,6 +49,7 @@ enum UseCase: String, CaseIterable, Identifiable {
 		case .customTriggerUI: "rectangle.on.rectangle"
 		case .promptField: "cube.transparent"
 		case .projectsField: "folder"
+		case .toolsField: "wrench.and.screwdriver"
 		case .kitchenSink: "frying.pan"
 		}
 	}
@@ -101,6 +105,8 @@ struct ContentView: View {
 			PromptFieldDemo()
 		case .projectsField:
 			ProjectsFieldDemo()
+		case .toolsField:
+			ToolsFieldDemo()
 		case .kitchenSink:
 			KitchenSinkDemo()
 		}

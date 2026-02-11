@@ -26,8 +26,23 @@ struct TokenInputSuggestionRow: View {
 		item.symbolName ?? "sparkle.magnifyingglass"
 	}
 
-	var body: some View {
-		HStack(alignment: .center, spacing: isCompact ? 8 : 10) {
+	@ViewBuilder
+	private var iconView: some View {
+		if let imageName = item.imageName, let nsImage = NSImage(named: imageName) {
+			Image(nsImage: nsImage)
+				.resizable()
+				.aspectRatio(contentMode: .fit)
+				.frame(width: isCompact ? 16 : 20, height: isCompact ? 16 : 20)
+				.frame(width: isCompact ? 20 : 32, height: isCompact ? 20 : 32)
+				.background(
+					Group {
+						if !isCompact {
+							Circle()
+								.fill(iconBackground)
+						}
+					}
+				)
+		} else {
 			Image(systemName: iconName)
 				.font(.system(size: isCompact ? 13 : 15, weight: isCompact ? .medium : .semibold))
 				.frame(width: isCompact ? 20 : 32, height: isCompact ? 20 : 32)
@@ -40,6 +55,12 @@ struct TokenInputSuggestionRow: View {
 					}
 				)
 				.foregroundStyle(primaryForeground)
+		}
+	}
+
+	var body: some View {
+		HStack(alignment: .center, spacing: isCompact ? 8 : 10) {
+			iconView
 
 			VStack(alignment: .leading, spacing: 2) {
 				Text(item.title)
