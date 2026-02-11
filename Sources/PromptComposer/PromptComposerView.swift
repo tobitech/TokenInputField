@@ -10,15 +10,212 @@ public struct PromptComposerView: NSViewRepresentable {
 	public typealias NSViewType = PromptComposerScrollView
 
 	@Binding private var state: PromptComposerState
-	private let config: PromptComposerConfig
+	private var config: PromptComposerConfig = PromptComposerConfig()
 
 	public init(state: Binding<PromptComposerState>) {
-		self.init(state: state, config: PromptComposerConfig())
+		self._state = state
 	}
 
-	public init(state: Binding<PromptComposerState>, config: PromptComposerConfig) {
-		self._state = state
-		self.config = config
+	// MARK: - Modifier methods
+
+	/// Sets the font used for editor text.
+	///
+	/// Prefixed to avoid ambiguity with SwiftUI's `.font(_:)` modifier.
+	public func composerFont(_ font: NSFont) -> Self {
+		var copy = self
+		copy.config.font = font
+		return copy
+	}
+
+	/// Sets the text color.
+	public func textColor(_ color: NSColor) -> Self {
+		var copy = self
+		copy.config.textColor = color
+		return copy
+	}
+
+	/// Sets the background color.
+	public func backgroundColor(_ color: NSColor) -> Self {
+		var copy = self
+		copy.config.backgroundColor = color
+		return copy
+	}
+
+	/// Configures the border styling.
+	///
+	/// Calling this implicitly enables the border.
+	public func composerBorder(
+		color: NSColor = .separatorColor,
+		width: CGFloat = 1,
+		cornerRadius: CGFloat = 8
+	) -> Self {
+		var copy = self
+		copy.config.showsBorder = true
+		copy.config.borderColor = color
+		copy.config.borderWidth = width
+		copy.config.cornerRadius = cornerRadius
+		return copy
+	}
+
+	/// Hides or shows the border.
+	public func composerBorder(hidden: Bool) -> Self {
+		var copy = self
+		copy.config.showsBorder = !hidden
+		return copy
+	}
+
+	/// Sets the text container insets (horizontal/vertical padding).
+	public func textInsets(_ insets: NSSize) -> Self {
+		var copy = self
+		copy.config.textInsets = insets
+		return copy
+	}
+
+	/// Controls whether the editor is editable.
+	public func editable(_ isEditable: Bool) -> Self {
+		var copy = self
+		copy.config.isEditable = isEditable
+		return copy
+	}
+
+	/// Controls whether the editor text is selectable.
+	public func selectable(_ isSelectable: Bool) -> Self {
+		var copy = self
+		copy.config.isSelectable = isSelectable
+		return copy
+	}
+
+	/// Controls whether rich text is enabled.
+	public func richText(_ enabled: Bool) -> Self {
+		var copy = self
+		copy.config.isRichText = enabled
+		return copy
+	}
+
+	/// Controls whether pasted text keeps its source formatting.
+	///
+	/// When `false`, pasted text is converted to plain text matching the composer styling.
+	public func preservesPastedFormatting(_ preserves: Bool) -> Self {
+		var copy = self
+		copy.config.preservesPastedFormatting = preserves
+		return copy
+	}
+
+	/// Controls whether undo is enabled.
+	public func allowsUndo(_ allows: Bool) -> Self {
+		var copy = self
+		copy.config.allowsUndo = allows
+		return copy
+	}
+
+	/// Controls the vertical scroller visibility.
+	public func verticalScroller(_ enabled: Bool) -> Self {
+		var copy = self
+		copy.config.hasVerticalScroller = enabled
+		return copy
+	}
+
+	/// Controls the horizontal scroller visibility.
+	public func horizontalScroller(_ enabled: Bool) -> Self {
+		var copy = self
+		copy.config.hasHorizontalScroller = enabled
+		return copy
+	}
+
+	/// Sets the visible line range for auto-sizing.
+	public func visibleLines(min: Int = 1, max: Int = 15) -> Self {
+		var copy = self
+		copy.config.minVisibleLines = min
+		copy.config.maxVisibleLines = max
+		return copy
+	}
+
+	/// Sets the direction the composer grows as content increases.
+	public func growthDirection(_ direction: GrowthDirection) -> Self {
+		var copy = self
+		copy.config.growthDirection = direction
+		return copy
+	}
+
+	/// Sets a submit handler called when Return/Enter is pressed.
+	///
+	/// Calling this implicitly sets `submitsOnEnter` to `true`.
+	public func onSubmit(_ action: @escaping () -> Void) -> Self {
+		var copy = self
+		copy.config.onSubmit = action
+		copy.config.submitsOnEnter = true
+		return copy
+	}
+
+	/// Independently toggles whether Return/Enter submits.
+	public func submitsOnEnter(_ enabled: Bool) -> Self {
+		var copy = self
+		copy.config.submitsOnEnter = enabled
+		return copy
+	}
+
+	/// Registers a trigger character that activates the suggestion system.
+	///
+	/// Each call appends a new trigger — call once per trigger character.
+	public func trigger(
+		_ character: Character,
+		requiresLeadingBoundary: Bool = false,
+		isCompact: Bool = false,
+		showsBuiltInPanel: Bool = true,
+		panelSizing: PromptSuggestionPanelSizing? = nil,
+		suggestionsProvider: @escaping @Sendable (TriggerContext) -> [PromptSuggestion],
+		onSelect: @escaping @Sendable (PromptSuggestion, TriggerContext) -> TriggerAction,
+		onTriggerEvent: (@Sendable (TriggerEvent) -> Void)? = nil
+	) -> Self {
+		var copy = self
+		copy.config.triggers.append(PromptTrigger(
+			character: character,
+			requiresLeadingBoundary: requiresLeadingBoundary,
+			panelSizing: panelSizing,
+			isCompact: isCompact,
+			showsBuiltInPanel: showsBuiltInPanel,
+			suggestionsProvider: suggestionsProvider,
+			onSelect: onSelect,
+			onTriggerEvent: onTriggerEvent
+		))
+		return copy
+	}
+
+	/// Sets the default panel sizing used when a trigger does not specify its own.
+	public func defaultPanelSizing(_ sizing: PromptSuggestionPanelSizing) -> Self {
+		var copy = self
+		copy.config.defaultPanelSizing = sizing
+		return copy
+	}
+
+	/// Enables or disables Tab / Shift-Tab navigation across editable tokens.
+	public func editableTokenTabNavigation(_ enabled: Bool) -> Self {
+		var copy = self
+		copy.config.editableTokenTabNavigationEnabled = enabled
+		return copy
+	}
+
+	/// Focuses the first editable token when the editor first appears.
+	public func autoFocusFirstEditableToken(_ enabled: Bool) -> Self {
+		var copy = self
+		copy.config.autoFocusFirstEditableTokenOnAppear = enabled
+		return copy
+	}
+
+	/// Called when a dismissible token's dismiss button is clicked.
+	public func onTokenDismissed(_ action: @escaping (Token) -> Void) -> Self {
+		var copy = self
+		copy.config.onTokenDismissed = action
+		return copy
+	}
+
+	/// Provides a default ``TokenStyle`` for tokens based on their behavior.
+	///
+	/// Tokens with an explicit `style` set are not affected.
+	public func defaultTokenStyle(_ provider: @escaping (TokenBehavior) -> TokenStyle) -> Self {
+		var copy = self
+		copy.config.defaultTokenStyle = provider
+		return copy
 	}
 
 	public func makeCoordinator() -> Coordinator {

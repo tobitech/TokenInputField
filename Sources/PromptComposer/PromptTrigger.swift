@@ -55,33 +55,33 @@ public enum TriggerEvent: Sendable {
 ///
 /// Each trigger owns its own suggestion provider, selection handler, and optional
 /// lifecycle callbacks. This replaces the hardcoded `@` / `/` system.
-public struct PromptTrigger: Sendable {
+struct PromptTrigger: Sendable {
 	/// The character that activates this trigger (e.g. `@`, `/`, `$`, `#`).
-	public var character: Character
+	var character: Character
 
 	/// When `true`, the trigger character must follow whitespace or be at the start of text.
-	public var requiresLeadingBoundary: Bool
+	var requiresLeadingBoundary: Bool
 
 	/// Per-trigger panel sizing override. `nil` uses ``PromptComposerConfig/defaultPanelSizing``.
-	public var panelSizing: PromptSuggestionPanelSizing?
+	var panelSizing: PromptSuggestionPanelSizing?
 
 	/// Use compact (single-line) rows instead of standard rows.
-	public var isCompact: Bool
+	var isCompact: Bool
 
 	/// When `false`, the built-in suggestion panel is not shown and the developer
 	/// is expected to show their own UI using ``onTriggerEvent`` notifications.
-	public var showsBuiltInPanel: Bool
+	var showsBuiltInPanel: Bool
 
 	/// Provides suggestions when this trigger is active.
-	public var suggestionsProvider: @Sendable (TriggerContext) -> [PromptSuggestion]
+	var suggestionsProvider: @Sendable (TriggerContext) -> [PromptSuggestion]
 
 	/// Called when the user selects a suggestion. The return value controls what happens.
-	public var onSelect: @Sendable (PromptSuggestion, TriggerContext) -> TriggerAction
+	var onSelect: @Sendable (PromptSuggestion, TriggerContext) -> TriggerAction
 
 	/// Optional lifecycle notifications for custom UI. `nil` = no notifications.
-	public var onTriggerEvent: (@Sendable (TriggerEvent) -> Void)?
+	var onTriggerEvent: (@Sendable (TriggerEvent) -> Void)?
 
-	public init(
+	init(
 		character: Character,
 		requiresLeadingBoundary: Bool = false,
 		panelSizing: PromptSuggestionPanelSizing? = nil,

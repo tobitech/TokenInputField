@@ -1,0 +1,165 @@
+import AppKit
+import PromptComposer
+
+enum SampleData {
+	@MainActor static func attributedText() -> NSAttributedString {
+		let document = PromptDocument(segments: [
+			.text("Generate a high-resolution, professional headshot suitable for a corporate profile picture. The subject should be looking directly at the camera with a "),
+			.token(
+				Token(
+					kind: .variable,
+					behavior: .editable,
+					display: "confident",
+					metadata: [
+						"key": "expression",
+						"placeholder": "confident"
+					]
+				)
+			),
+			.text(" expression. The lighting should be "),
+			.token(
+				Token(
+					kind: .variable,
+					behavior: .editable,
+					display: "soft and even",
+					metadata: [
+						"key": "lighting",
+						"placeholder": "soft and even"
+					]
+				)
+			),
+			.text(", and the background should be a solid neutral color like "),
+			.token(
+				Token(
+					kind: .variable,
+					behavior: .editable,
+					display: "light gray",
+					metadata: [
+						"key": "backgroundColor",
+						"placeholder": "light gray"
+					]
+				)
+			),
+			.text(". The final image should be in a "),
+			.token(
+				Token(
+					kind: .variable,
+					behavior: .editable,
+					display: "realistic",
+					metadata: [
+						"key": "style",
+						"placeholder": "realistic"
+					]
+				)
+			),
+			.text(" style, suitable for "),
+			.token(
+				Token(
+					kind: .variable,
+					behavior: .editable,
+					display: "LinkedIn",
+					metadata: [
+						"key": "audience",
+						"placeholder": "LinkedIn"
+					]
+				)
+			),
+			.text(".")
+		])
+		return document.buildAttributedString(
+			baseAttributes: [
+				.font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
+				.foregroundColor: NSColor.labelColor
+			],
+			usesAttachments: true
+		)
+	}
+
+	nonisolated static func fileSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
+		let files: [PromptSuggestion] = [
+			PromptSuggestion(
+				title: "Budget.xlsx",
+				subtitle: "/Finance/Budget.xlsx",
+				section: "Recent files",
+				symbolName: "tablecells"
+			),
+			PromptSuggestion(
+				title: "Q1 Plan.md",
+				subtitle: "/Planning/Q1 Plan.md",
+				section: "Recent files",
+				symbolName: "doc.text"
+			),
+			PromptSuggestion(
+				title: "ProductRoadmap.pdf",
+				subtitle: "/Roadmap/ProductRoadmap.pdf",
+				section: "Shared",
+				symbolName: "doc.richtext"
+			),
+			PromptSuggestion(
+				title: "Interview Notes.txt",
+				subtitle: "/Notes/Interview Notes.txt",
+				section: "Shared",
+				symbolName: "note.text"
+			)
+		]
+
+		let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !query.isEmpty else { return files }
+
+		return files.filter { item in
+			item.title.localizedStandardContains(query)
+				|| (item.subtitle?.localizedStandardContains(query) ?? false)
+		}
+	}
+
+	nonisolated static func commandSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
+		let commands: [PromptSuggestion] = [
+			PromptSuggestion(
+				title: "Research",
+				subtitle: "Access Dia's reasoning model for deeper thinking.",
+				section: "Insert token",
+				symbolName: "lightbulb"
+			),
+			PromptSuggestion(
+				title: "Analyze",
+				subtitle: "Analyze this content, looking for bias, patterns, trends, contradictions.",
+				section: "Insert token",
+				symbolName: "magnifyingglass.circle"
+			),
+			PromptSuggestion(
+				title: "Explain",
+				subtitle: "Please explain the concept, topic, or content in clear, accessible language.",
+				section: "Run command",
+				symbolName: "lightbulb.max"
+			),
+			PromptSuggestion(
+				title: "Summarize",
+				subtitle: "Please provide a clear, concise summary of the attached content.",
+				section: "Run command",
+				symbolName: "line.3.horizontal.decrease"
+			)
+		]
+
+		let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !query.isEmpty else { return commands }
+
+		return commands.filter { item in
+			item.title.localizedStandardContains(query)
+				|| (item.subtitle?.localizedStandardContains(query) ?? false)
+		}
+	}
+
+	nonisolated static func projectSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
+		let projects: [PromptSuggestion] = [
+			PromptSuggestion(title: "Website Redesign", symbolName: "globe"),
+			PromptSuggestion(title: "Mobile App v2", symbolName: "iphone"),
+			PromptSuggestion(title: "Data Pipeline", symbolName: "arrow.triangle.branch"),
+			PromptSuggestion(title: "Brand Guidelines", symbolName: "paintbrush"),
+		]
+
+		let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !query.isEmpty else { return projects }
+
+		return projects.filter { $0.title.localizedStandardContains(query) }
+	}
+}

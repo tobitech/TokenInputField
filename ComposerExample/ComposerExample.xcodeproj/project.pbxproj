@@ -7,20 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A1000001 /* PromptComposer in Frameworks */ = {
-			isa = PBXBuildFile;
-			productRef = A1000002 /* PromptComposer */;
-		};
+		A1000001 /* PromptComposer in Frameworks */ = {isa = PBXBuildFile; productRef = A1000002 /* PromptComposer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A1000010 /* ComposerExample.app */ = {
-			isa = PBXFileReference;
-			explicitFileType = wrapper.application;
-			includeInIndex = 0;
-			path = ComposerExample.app;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
+		A1000010 /* ComposerExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ComposerExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,7 +34,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A1000020 /* Root */ = {
+		A1000020 = {
 			isa = PBXGroup;
 			children = (
 				A1000012 /* ComposerExample */,
@@ -107,7 +98,7 @@
 				en,
 				Base,
 			);
-			mainGroup = A1000020 /* Root */;
+			mainGroup = A1000020;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A1000003 /* XCLocalSwiftPackageReference "../" */,
