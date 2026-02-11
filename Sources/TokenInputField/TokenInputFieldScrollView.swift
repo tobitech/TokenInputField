@@ -148,7 +148,8 @@ public final class TokenInputFieldScrollView: NSScrollView {
 		verticalScrollElasticity = allowsVerticalScroll ? .automatic : .none
 		let singleLineThreshold = max(lineHeight, typographicLineHeight) + 0.5
 		textView.measuredTextContentHeight = measuredTextHeight
-		textView.centersSingleLineContentVertically = !allowsVerticalScroll
+		textView.centersSingleLineContentVertically = (minLines == 1)
+			&& !allowsVerticalScroll
 			&& measuredTextHeight <= singleLineThreshold
 
 		if !allowsVerticalScroll {

@@ -207,10 +207,14 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 				let iconY = cellFrame.origin.y + (cellFrame.height - iconSize.height) / 2
 				let iconRect = NSRect(x: textX, y: iconY, width: iconSize.width, height: iconSize.height)
 
-				NSGraphicsContext.saveGraphicsState()
-				textColor.set()
-				configured.draw(in: iconRect, from: .zero, operation: .sourceOver, fraction: 1.0)
-				NSGraphicsContext.restoreGraphicsState()
+				// Tint the SF Symbol with the token's text color
+				let tinted = NSImage(size: configured.size, flipped: false) { rect in
+					configured.draw(in: rect)
+					self.textColor.setFill()
+					rect.fill(using: .sourceAtop)
+					return true
+				}
+				tinted.draw(in: iconRect)
 
 				textX += ceil(iconSize.width) + Self.iconTextSpacing
 			}
