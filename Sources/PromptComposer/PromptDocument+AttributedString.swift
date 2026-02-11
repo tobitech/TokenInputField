@@ -72,7 +72,8 @@ public final class TokenAttachment: NSTextAttachment {
 public extension PromptDocument {
 	@MainActor func buildAttributedString(
 		baseAttributes: [NSAttributedString.Key: Any] = [:],
-		usesAttachments: Bool = false
+		usesAttachments: Bool = false,
+		defaultTokenStyle: ((TokenBehavior) -> TokenStyle)? = nil
 	) -> NSAttributedString {
 		let output = NSMutableAttributedString()
 		let tokenFont = (baseAttributes[.font] as? NSFont) ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
@@ -82,7 +83,12 @@ public extension PromptDocument {
 			case .text(let value):
 				let attributed = NSAttributedString(string: value, attributes: baseAttributes)
 				output.append(attributed)
-			case .token(let token):
+			case .token(var token):
+				// Apply default style from provider if token has no explicit style
+				if token.style == nil, let styleProvider = defaultTokenStyle {
+					token.style = styleProvider(token.behavior)
+				}
+
 				if usesAttachments {
 					let attachment = TokenAttachment(token: token)
 					attachment.attachmentCell = TokenAttachmentCell(

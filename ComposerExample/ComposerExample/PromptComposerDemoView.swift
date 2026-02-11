@@ -14,13 +14,74 @@ struct PromptComposerDemoView: View {
 		config.minVisibleLines = 1
 		config.maxVisibleLines = 10
 		config.growthDirection = .up
-		config.autoFocusFirstVariableTokenOnAppear = true
-		config.suggestFiles = { query in
-			Self.sampleFileSuggestions(matching: query)
+		config.autoFocusFirstEditableTokenOnAppear = true
+
+		// @ trigger — file mentions (compact rows)
+		config.triggers.append(PromptTrigger(
+			character: "@",
+			requiresLeadingBoundary: false,
+			isCompact: true,
+			suggestionsProvider: { ctx in
+				Self.sampleFileSuggestions(matching: ctx.query)
+			},
+			onSelect: { suggestion, _ in
+				.insertToken(Token(
+					kind: .fileMention,
+					behavior: .standard,
+					display: suggestion.title,
+					style: .accent,
+					metadata: ["path": suggestion.subtitle ?? ""]
+				))
+			}
+		))
+
+		// / trigger — slash commands (standard rows, requires leading boundary)
+		config.triggers.append(PromptTrigger(
+			character: "/",
+			requiresLeadingBoundary: true,
+			isCompact: false,
+			suggestionsProvider: { ctx in
+				Self.sampleCommandSuggestions(matching: ctx.query)
+			},
+			onSelect: { suggestion, _ in
+				// "Explain" and "Summarize" run immediately (no token)
+				if suggestion.title == "Explain" || suggestion.title == "Summarize" {
+					print("Executed command: \(suggestion.title)")
+					return .dismiss
+				}
+				// Others insert a token pill
+				return .insertToken(Token(
+					kind: .command,
+					behavior: .standard,
+					display: suggestion.title,
+					style: TokenStyle(symbolName: suggestion.symbolName)
+				))
+			}
+		))
+
+		// $ trigger — dismissible project mentions (compact rows)
+		config.triggers.append(PromptTrigger(
+			character: "$",
+			requiresLeadingBoundary: false,
+			isCompact: true,
+			suggestionsProvider: { ctx in
+				Self.sampleProjectSuggestions(matching: ctx.query)
+			},
+			onSelect: { suggestion, _ in
+				.insertToken(Token(
+					kind: TokenKind(rawValue: "project"),
+					behavior: .dismissible,
+					display: suggestion.title,
+					style: .muted,
+					metadata: ["projectID": suggestion.id.uuidString]
+				))
+			}
+		))
+
+		config.onTokenDismissed = { token in
+			print("Dismissed token: \(token.display)")
 		}
-		config.commands = Self.sampleCommands()
-		config.onSuggestionSelected = handleSuggestionSelection
-		config.onCommandExecuted = handleCommandExecution
+
 		return config
 	}
 
@@ -43,18 +104,6 @@ struct PromptComposerDemoView: View {
 		.padding()
 	}
 
-	private func handleSuggestionSelection(
-		_ suggestion: PromptSuggestion
-	) {
-		print("Selected suggestion: \(suggestion.title)")
-	}
-
-	private func handleCommandExecution(
-		_ command: PromptCommand
-	) {
-		print("Executed command: /\(command.keyword)")
-	}
-
 	private var exportedPlaceholderText: String {
 		let document = PromptDocument.extractDocument(from: state.attributedText)
 		return document.exportPlaceholders()
@@ -66,6 +115,7 @@ struct PromptComposerDemoView: View {
 			.token(
 				Token(
 					kind: .variable,
+					behavior: .editable,
 					display: "confident",
 					metadata: [
 						"key": "expression",
@@ -77,6 +127,7 @@ struct PromptComposerDemoView: View {
 			.token(
 				Token(
 					kind: .variable,
+					behavior: .editable,
 					display: "soft and even",
 					metadata: [
 						"key": "lighting",
@@ -88,6 +139,7 @@ struct PromptComposerDemoView: View {
 			.token(
 				Token(
 					kind: .variable,
+					behavior: .editable,
 					display: "light gray",
 					metadata: [
 						"key": "backgroundColor",
@@ -99,6 +151,7 @@ struct PromptComposerDemoView: View {
 			.token(
 				Token(
 					kind: .variable,
+					behavior: .editable,
 					display: "realistic",
 					metadata: [
 						"key": "style",
@@ -110,6 +163,7 @@ struct PromptComposerDemoView: View {
 			.token(
 				Token(
 					kind: .variable,
+					behavior: .editable,
 					display: "LinkedIn",
 					metadata: [
 						"key": "audience",
@@ -128,33 +182,29 @@ struct PromptComposerDemoView: View {
 		)
 	}
 
-	private static func sampleFileSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
+	nonisolated private static func sampleFileSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
 		let files: [PromptSuggestion] = [
 			PromptSuggestion(
 				title: "Budget.xlsx",
 				subtitle: "/Finance/Budget.xlsx",
-				kind: .fileMention,
 				section: "Recent files",
 				symbolName: "tablecells"
 			),
 			PromptSuggestion(
 				title: "Q1 Plan.md",
 				subtitle: "/Planning/Q1 Plan.md",
-				kind: .fileMention,
 				section: "Recent files",
 				symbolName: "doc.text"
 			),
 			PromptSuggestion(
 				title: "ProductRoadmap.pdf",
 				subtitle: "/Roadmap/ProductRoadmap.pdf",
-				kind: .fileMention,
 				section: "Shared",
 				symbolName: "doc.richtext"
 			),
 			PromptSuggestion(
 				title: "Interview Notes.txt",
 				subtitle: "/Notes/Interview Notes.txt",
-				kind: .fileMention,
 				section: "Shared",
 				symbolName: "note.text"
 			)
@@ -169,41 +219,55 @@ struct PromptComposerDemoView: View {
 		}
 	}
 
-	private static func sampleCommands() -> [PromptCommand] {
-		[
-			PromptCommand(
-				keyword: "research",
+	nonisolated private static func sampleCommandSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
+		let commands: [PromptSuggestion] = [
+			PromptSuggestion(
 				title: "Research",
 				subtitle: "Access Dia's reasoning model for deeper thinking.",
 				section: "Insert token",
-				symbolName: "lightbulb",
-				mode: .insertToken
+				symbolName: "lightbulb"
 			),
-			PromptCommand(
-				keyword: "analyze",
+			PromptSuggestion(
 				title: "Analyze",
 				subtitle: "Analyze this content, looking for bias, patterns, trends, contradictions.",
 				section: "Insert token",
-				symbolName: "magnifyingglass.circle",
-				mode: .insertToken
+				symbolName: "magnifyingglass.circle"
 			),
-			PromptCommand(
-				keyword: "explain",
+			PromptSuggestion(
 				title: "Explain",
 				subtitle: "Please explain the concept, topic, or content in clear, accessible language.",
 				section: "Run command",
-				symbolName: "lightbulb.max",
-				mode: .runCommand
+				symbolName: "lightbulb.max"
 			),
-			PromptCommand(
-				keyword: "summarize",
+			PromptSuggestion(
 				title: "Summarize",
 				subtitle: "Please provide a clear, concise summary of the attached content.",
 				section: "Run command",
-				symbolName: "line.3.horizontal.decrease",
-				mode: .runCommand
+				symbolName: "line.3.horizontal.decrease"
 			)
 		]
+
+		let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !query.isEmpty else { return commands }
+
+		return commands.filter { item in
+			item.title.localizedStandardContains(query)
+				|| (item.subtitle?.localizedStandardContains(query) ?? false)
+		}
+	}
+
+	nonisolated private static func sampleProjectSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
+		let projects: [PromptSuggestion] = [
+			PromptSuggestion(title: "Website Redesign", symbolName: "globe"),
+			PromptSuggestion(title: "Mobile App v2", symbolName: "iphone"),
+			PromptSuggestion(title: "Data Pipeline", symbolName: "arrow.triangle.branch"),
+			PromptSuggestion(title: "Brand Guidelines", symbolName: "paintbrush"),
+		]
+
+		let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+		guard !query.isEmpty else { return projects }
+
+		return projects.filter { $0.title.localizedStandardContains(query) }
 	}
 }
 

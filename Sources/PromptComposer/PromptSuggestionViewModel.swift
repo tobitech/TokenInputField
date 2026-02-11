@@ -38,7 +38,6 @@ final class PromptSuggestionViewModel {
 		return zip(lhs, rhs).allSatisfy { left, right in
 			left.title == right.title
 				&& left.subtitle == right.subtitle
-				&& left.kind == right.kind
 				&& left.section == right.section
 				&& left.symbolName == right.symbolName
 		}

@@ -51,8 +51,8 @@ struct PromptSuggestionSectionView: View {
 			id: 0,
 			title: "Recent files",
 			rows: [
-				PromptSuggestionIndexedItem(index: 0, item: PromptSuggestion(title: "Budget.xlsx", kind: .fileMention, symbolName: "tablecells")),
-				PromptSuggestionIndexedItem(index: 1, item: PromptSuggestion(title: "Q1 Plan.md", kind: .fileMention, symbolName: "doc.text")),
+				PromptSuggestionIndexedItem(index: 0, item: PromptSuggestion(title: "Budget.xlsx", symbolName: "tablecells")),
+				PromptSuggestionIndexedItem(index: 1, item: PromptSuggestion(title: "Q1 Plan.md", symbolName: "doc.text")),
 			]
 		),
 		isCompact: true,
@@ -71,8 +71,8 @@ struct PromptSuggestionSectionView: View {
 			id: 1,
 			title: "Shared",
 			rows: [
-				PromptSuggestionIndexedItem(index: 2, item: PromptSuggestion(title: "ProductRoadmap.pdf", kind: .fileMention, symbolName: "doc.richtext")),
-				PromptSuggestionIndexedItem(index: 3, item: PromptSuggestion(title: "Interview Notes.txt", kind: .fileMention, symbolName: "note.text")),
+				PromptSuggestionIndexedItem(index: 2, item: PromptSuggestion(title: "ProductRoadmap.pdf", symbolName: "doc.richtext")),
+				PromptSuggestionIndexedItem(index: 3, item: PromptSuggestion(title: "Interview Notes.txt", symbolName: "note.text")),
 			]
 		),
 		isCompact: true,

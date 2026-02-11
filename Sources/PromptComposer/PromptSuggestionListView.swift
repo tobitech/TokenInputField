@@ -149,10 +149,10 @@ struct PromptSuggestionListView: View {
 	let model = PromptSuggestionViewModel()
 	model.isCompact = true
 	model.updateItems([
-		PromptSuggestion(title: "Budget.xlsx", kind: .fileMention, section: "Recent files", symbolName: "tablecells"),
-		PromptSuggestion(title: "Q1 Plan.md", kind: .fileMention, section: "Recent files", symbolName: "doc.text"),
-		PromptSuggestion(title: "ProductRoadmap.pdf", kind: .fileMention, section: "Shared", symbolName: "doc.richtext"),
-		PromptSuggestion(title: "Interview Notes.txt", kind: .fileMention, section: "Shared", symbolName: "note.text"),
+		PromptSuggestion(title: "Budget.xlsx", section: "Recent files", symbolName: "tablecells"),
+		PromptSuggestion(title: "Q1 Plan.md", section: "Recent files", symbolName: "doc.text"),
+		PromptSuggestion(title: "ProductRoadmap.pdf", section: "Shared", symbolName: "doc.richtext"),
+		PromptSuggestion(title: "Interview Notes.txt", section: "Shared", symbolName: "note.text"),
 	])
 	model.selectedIndex = 1
 	return model
@@ -162,10 +162,10 @@ struct PromptSuggestionListView: View {
 	let model = PromptSuggestionViewModel()
 	model.isCompact = false
 	model.updateItems([
-		PromptSuggestion(title: "Summarize", subtitle: "Generate a concise summary", kind: .command, section: "Commands", symbolName: "text.alignleft"),
-		PromptSuggestion(title: "Translate", subtitle: "Translate to another language", kind: .command, section: "Commands", symbolName: "globe"),
-		PromptSuggestion(title: "Fix Grammar", subtitle: "Correct grammar and spelling", kind: .command, section: "Editing", symbolName: "pencil.and.outline"),
-		PromptSuggestion(title: "Expand", subtitle: "Elaborate on the content", kind: .command, section: "Editing", symbolName: "arrow.up.left.and.arrow.down.right"),
+		PromptSuggestion(title: "Summarize", subtitle: "Generate a concise summary", section: "Commands", symbolName: "text.alignleft"),
+		PromptSuggestion(title: "Translate", subtitle: "Translate to another language", section: "Commands", symbolName: "globe"),
+		PromptSuggestion(title: "Fix Grammar", subtitle: "Correct grammar and spelling", section: "Editing", symbolName: "pencil.and.outline"),
+		PromptSuggestion(title: "Expand", subtitle: "Elaborate on the content", section: "Editing", symbolName: "arrow.up.left.and.arrow.down.right"),
 	])
 	model.selectedIndex = 2
 	return model

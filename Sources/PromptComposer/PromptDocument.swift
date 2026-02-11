@@ -49,29 +49,94 @@ public enum Segment: Equatable, Codable, Sendable {
 	}
 }
 
-public struct Token: Equatable, Codable, Identifiable, Sendable {
+public struct Token: Equatable, Identifiable, Sendable {
 	public var id: UUID
 	public var kind: TokenKind
+	public var behavior: TokenBehavior
 	public var display: String
+	public var style: TokenStyle?
 	public var metadata: [String: String]
 
 	public init(
 		id: UUID = UUID(),
 		kind: TokenKind,
+		behavior: TokenBehavior = .standard,
 		display: String,
+		style: TokenStyle? = nil,
 		metadata: [String: String] = [:]
 	) {
 		self.id = id
 		self.kind = kind
+		self.behavior = behavior
 		self.display = display
+		self.style = style
 		self.metadata = metadata
 	}
 }
 
-public enum TokenKind: String, Codable, Sendable {
-	case variable
-	case fileMention
-	case command
+extension Token: Codable {
+	private enum CodingKeys: String, CodingKey {
+		case id
+		case kind
+		case behavior
+		case display
+		case metadata
+	}
+
+	public init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		id = try container.decode(UUID.self, forKey: .id)
+		kind = try container.decode(TokenKind.self, forKey: .kind)
+		display = try container.decode(String.self, forKey: .display)
+		metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
+		// style is transient — not decoded
+
+		// Backward-compatible: if behavior is absent, default from kind
+		if let decoded = try container.decodeIfPresent(TokenBehavior.self, forKey: .behavior) {
+			behavior = decoded
+		} else {
+			behavior = Self.defaultBehavior(for: kind)
+		}
+		style = nil
+	}
+
+	public func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+		try container.encode(id, forKey: .id)
+		try container.encode(kind, forKey: .kind)
+		try container.encode(behavior, forKey: .behavior)
+		try container.encode(display, forKey: .display)
+		try container.encode(metadata, forKey: .metadata)
+		// style is transient — not encoded
+	}
+
+	/// Default behavior inferred from a token kind (used for backward compatibility).
+	public static func defaultBehavior(for kind: TokenKind) -> TokenBehavior {
+		if kind == .variable {
+			return .editable
+		}
+		return .standard
+	}
+}
+
+/// Extensible token identity.
+///
+/// Developers define custom kinds via ``init(rawValue:)``:
+/// ```swift
+/// let projectKind = TokenKind(rawValue: "project")
+/// ```
+/// Built-in constants (``variable``, ``fileMention``, ``command``) are provided for
+/// backward compatibility.
+public struct TokenKind: RawRepresentable, Hashable, Codable, Sendable {
+	public var rawValue: String
+
+	public init(rawValue: String) {
+		self.rawValue = rawValue
+	}
+
+	public static let variable = TokenKind(rawValue: "variable")
+	public static let fileMention = TokenKind(rawValue: "fileMention")
+	public static let command = TokenKind(rawValue: "command")
 }
 
 public extension PromptDocument {
@@ -82,7 +147,8 @@ public extension PromptDocument {
 
 	/// Exports the document to a placeholder-backed plain string.
 	///
-	/// Supported placeholders:
+	/// New unified format: `@{kind:uuid|display}`
+	/// Legacy formats for built-in kinds are still generated for backward compatibility:
 	/// - Variable token: `{{name}}`
 	/// - File token: `@{file:uuid|name}`
 	/// - Command token: `@{command:uuid|name}`
@@ -109,12 +175,21 @@ public extension PromptDocument {
 		return output
 	}
 
+	/// A closure that reconstructs `behavior` and `style` from a token's `kind` during import.
+	typealias TokenFactory = (_ kind: TokenKind, _ id: UUID, _ display: String, _ metadata: [String: String]) -> Token
+
 	/// Parses a placeholder-backed plain string into a structured document.
+	///
+	/// Supports the new unified format `@{kind:uuid|display}` as well as legacy formats:
+	/// - `{{name}}` — variable tokens
+	/// - `@{file:uuid|name}` — file mention tokens
+	/// - `@{command:uuid|name}` — command tokens
 	///
 	/// Unknown or malformed placeholders are preserved as literal text by default.
 	static func importPlaceholders(
 		from string: String,
-		unknownPlaceholderStrategy: UnknownPlaceholderStrategy = .preserveLiteralText
+		unknownPlaceholderStrategy: UnknownPlaceholderStrategy = .preserveLiteralText,
+		tokenFactory: TokenFactory? = nil
 	) -> PromptDocument {
 		var segments: [Segment] = []
 		var textBuffer = ""
@@ -135,6 +210,11 @@ public extension PromptDocument {
 			}
 		}
 
+		func applyFactory(_ token: Token) -> Token {
+			guard let factory = tokenFactory else { return token }
+			return factory(token.kind, token.id, token.display, token.metadata)
+		}
+
 		while cursor < string.endIndex {
 			if string[cursor...].hasPrefix("{{") {
 				let payloadStart = string.index(cursor, offsetBy: 2)
@@ -146,7 +226,7 @@ public extension PromptDocument {
 
 					if let token = variableToken(fromPayload: payload) {
 						flushTextBuffer()
-						segments.append(.token(token))
+						segments.append(.token(applyFactory(token)))
 					} else {
 						preserveUnknownPlaceholder(String(string[placeholderRange]))
 					}
@@ -166,7 +246,7 @@ public extension PromptDocument {
 
 					if let token = typedToken(fromPayload: payload) {
 						flushTextBuffer()
-						segments.append(.token(token))
+						segments.append(.token(applyFactory(token)))
 					} else {
 						preserveUnknownPlaceholder(String(string[placeholderRange]))
 					}
@@ -194,25 +274,33 @@ public extension PromptDocument {
 	}
 
 	private static func placeholder(for token: Token) -> String {
-		switch token.kind {
-		case .variable:
+		// Legacy formats for built-in kinds
+		if token.kind == .variable {
 			let rawName = nonEmptyTrimmed(token.display)
 				?? nonEmptyTrimmed(token.metadata["value"])
 				?? nonEmptyTrimmed(token.metadata["key"])
 				?? nonEmptyTrimmed(token.metadata["placeholder"])
 				?? "variable"
 			return "{{\(encodePlaceholderComponent(rawName))}}"
-		case .fileMention:
+		}
+
+		if token.kind == .fileMention {
 			let tokenID = parseUUID(token.metadata["suggestionID"]) ?? token.id
 			let rawName = nonEmptyTrimmed(token.display) ?? "file"
 			return "@{file:\(tokenID.uuidString)|\(encodePlaceholderComponent(rawName))}"
-		case .command:
+		}
+
+		if token.kind == .command {
 			let tokenID = parseUUID(token.metadata["commandID"]) ?? token.id
 			let rawName = nonEmptyTrimmed(token.display)
 				?? nonEmptyTrimmed(token.metadata["keyword"])
 				?? "command"
 			return "@{command:\(tokenID.uuidString)|\(encodePlaceholderComponent(rawName))}"
 		}
+
+		// Unified format for custom kinds: @{kind:uuid|display}
+		let rawName = nonEmptyTrimmed(token.display) ?? token.kind.rawValue
+		return "@{\(encodePlaceholderComponent(token.kind.rawValue)):\(token.id.uuidString)|\(encodePlaceholderComponent(rawName))}"
 	}
 
 	private static func variableToken(fromPayload payload: Substring) -> Token? {
@@ -222,6 +310,7 @@ public extension PromptDocument {
 
 		return Token(
 			kind: .variable,
+			behavior: .editable,
 			display: decoded,
 			metadata: ["key": decoded]
 		)
@@ -248,6 +337,7 @@ public extension PromptDocument {
 			return nil
 		}
 
+		// Legacy built-in types
 		switch type {
 		case "file":
 			return Token(
@@ -264,7 +354,15 @@ public extension PromptDocument {
 				metadata: ["commandID": id.uuidString]
 			)
 		default:
-			return nil
+			// Custom kind via unified format
+			guard let decodedType = decodePlaceholderComponent(Substring(type)) else {
+				return nil
+			}
+			return Token(
+				id: id,
+				kind: TokenKind(rawValue: decodedType),
+				display: decodedName
+			)
 		}
 	}
 

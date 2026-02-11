@@ -3,7 +3,7 @@ import SwiftUI
 
 /// SwiftUI wrapper for the AppKit-based prompt composer.
 ///
-/// This is the reusable surface you’ll embed across screens.
+/// This is the reusable surface you'll embed across screens.
 @MainActor
 public struct PromptComposerView: NSViewRepresentable {
 
@@ -41,7 +41,7 @@ public struct PromptComposerView: NSViewRepresentable {
 		context.coordinator.textView = textView
 		scrollView.updateHeight()
 
-		if config.autoFocusFirstVariableTokenOnAppear {
+		if config.autoFocusFirstEditableTokenOnAppear {
 			DispatchQueue.main.async { [weak textView] in
 				_ = textView?.focusFirstVariableTokenIfAvailable()
 			}
@@ -91,7 +91,7 @@ public struct PromptComposerView: NSViewRepresentable {
 
 		fileprivate var isApplyingSwiftUIUpdate = false
 		private var activeSuggestionTrigger: ActiveTrigger?
-		private var displayedCommandsBySuggestionID: [UUID: PromptCommand] = [:]
+		private var lastTriggerEventCharacter: Character?
 
 		init(parent: PromptComposerView) {
 			self.parent = parent
@@ -169,10 +169,30 @@ public struct PromptComposerView: NSViewRepresentable {
 				let promptTextView = textView as? PromptComposerTextView
 			else { return }
 
-			promptTextView.beginVariableTokenEditing(
-				at: charIndex,
-				suggestedCellFrame: cellFrame
-			)
+			// Check for dismiss button click on dismissible tokens
+			if let tokenCell = cell as? TokenAttachmentCell,
+			   tokenCell.token.behavior == .dismissible,
+			   let dismissRect = tokenCell.dismissButtonRect(in: cellFrame)
+			{
+				if let window = promptTextView.window {
+					let windowPoint = window.convertPoint(fromScreen: NSEvent.mouseLocation)
+					let viewPoint = promptTextView.convert(windowPoint, from: nil)
+					if dismissRect.contains(viewPoint) {
+						promptTextView.dismissToken(at: charIndex)
+						return
+					}
+				}
+			}
+
+			// For editable tokens, begin editing
+			if let tokenCell = cell as? TokenAttachmentCell,
+			   tokenCell.token.behavior == .editable
+			{
+				promptTextView.beginVariableTokenEditing(
+					at: charIndex,
+					suggestedCellFrame: cellFrame
+				)
+			}
 		}
 
 		public func textView(
@@ -199,45 +219,54 @@ public struct PromptComposerView: NSViewRepresentable {
 			return promptTextView.handleUnresolvedVariableTokenCommand(commandSelector)
 		}
 
+		// MARK: - Trigger-based suggestion system
+
 		private func updateSuggestions(for promptTextView: PromptComposerTextView) {
 			let selectedRange = promptTextView.selectedRange()
-			let trigger = activeTrigger(in: promptTextView.string, selectedRange: selectedRange)
+			let text = promptTextView.string
+			let trigger = activeTrigger(in: text, selectedRange: selectedRange)
+			let previousTrigger = activeSuggestionTrigger
 			activeSuggestionTrigger = trigger
-			displayedCommandsBySuggestionID = [:]
 
-			let context = PromptSuggestionContext(
-				text: promptTextView.string,
-				selectedRange: selectedRange,
-				triggerCharacter: trigger?.character,
-				triggerRange: trigger?.replacementRange,
-				triggerQuery: trigger?.query
+			guard let trigger else {
+				// No active trigger — dismiss panel and fire deactivated event
+				promptTextView.clearSuggestionTriggerHighlight()
+				suggestionController.update(items: [], anchorRange: nil, isCompact: false)
+				if lastTriggerEventCharacter != nil {
+					fireDeactivatedEvent(for: previousTrigger)
+					lastTriggerEventCharacter = nil
+				}
+				return
+			}
+
+			let triggerConfig = trigger.triggerConfig
+			let triggerContext = TriggerContext(
+				character: trigger.character,
+				query: trigger.query,
+				text: text,
+				replacementRange: trigger.replacementRange,
+				selectedRange: selectedRange
 			)
 
-			let items: [PromptSuggestion]
-			if let trigger, trigger.character == "@", let suggestFiles = promptTextView.config.suggestFiles {
-				items = normalizedFileSuggestions(from: suggestFiles(trigger.query))
-			} else if let trigger, trigger.character == "/" {
-				let commands = filteredCommands(
-					from: promptTextView.config.commands,
-					query: trigger.query
-				)
-				displayedCommandsBySuggestionID = Dictionary(
-					uniqueKeysWithValues: commands.map { ($0.id, $0) }
-				)
-				if !commands.isEmpty {
-					items = commands.map(makeCommandSuggestion(from:))
-				} else if let provider = promptTextView.config.suggestionsProvider {
-					items = provider(context)
-				} else {
-					items = []
+			// Fire trigger events
+			if lastTriggerEventCharacter != trigger.character {
+				if lastTriggerEventCharacter != nil {
+					fireDeactivatedEvent(for: previousTrigger)
 				}
-			} else if let provider = promptTextView.config.suggestionsProvider {
-				items = provider(context)
+				triggerConfig.onTriggerEvent?(.activated(triggerContext))
+				lastTriggerEventCharacter = trigger.character
+			} else {
+				triggerConfig.onTriggerEvent?(.queryChanged(triggerContext))
+			}
+
+			let items: [PromptSuggestion]
+			if triggerConfig.showsBuiltInPanel {
+				items = triggerConfig.suggestionsProvider(triggerContext)
 			} else {
 				items = []
 			}
 
-			if let trigger, !items.isEmpty {
+			if !items.isEmpty {
 				promptTextView.updateSuggestionTriggerHighlight(
 					range: trigger.replacementRange,
 					character: trigger.character,
@@ -247,13 +276,21 @@ public struct PromptComposerView: NSViewRepresentable {
 				promptTextView.clearSuggestionTriggerHighlight()
 			}
 
-			suggestionController.update(items: items, anchorRange: trigger?.anchorRange, isCompact: trigger?.character == "@")
+			let sizing = triggerConfig.panelSizing ?? promptTextView.config.defaultPanelSizing
+			suggestionController.update(
+				items: items,
+				anchorRange: trigger.anchorRange,
+				isCompact: triggerConfig.isCompact,
+				sizing: sizing
+			)
+		}
+
+		private func fireDeactivatedEvent(for trigger: ActiveTrigger?) {
+			guard let trigger else { return }
+			trigger.triggerConfig.onTriggerEvent?(.deactivated)
 		}
 
 		private func handleSelectedSuggestion(_ suggestion: PromptSuggestion) {
-			let onSuggestionSelected = parent.config.onSuggestionSelected
-			defer { onSuggestionSelected?(suggestion) }
-
 			guard
 				let textView,
 				let trigger = activeSuggestionTrigger
@@ -264,76 +301,21 @@ public struct PromptComposerView: NSViewRepresentable {
 
 			textView.clearSuggestionTriggerHighlight()
 
-			switch trigger.character {
-			case "@":
-				insertFileSuggestion(suggestion, replacing: trigger.replacementRange, in: textView)
-			case "/":
-				guard
-					let command = displayedCommandsBySuggestionID[suggestion.id]
-						?? parent.config.commands.first(where: { $0.id == suggestion.id })
-				else {
-					return
-				}
-				handleSlashCommandSelection(
-					command,
-					replacing: trigger.replacementRange,
-					in: textView
-				)
-			default:
-				return
-			}
-		}
-
-		private func filteredCommands(
-			from commands: [PromptCommand],
-			query rawQuery: String
-		) -> [PromptCommand] {
-			let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-			guard !query.isEmpty else { return commands }
-
-			return commands.filter { command in
-				command.keyword.localizedStandardContains(query)
-					|| command.title.localizedStandardContains(query)
-					|| (command.subtitle?.localizedStandardContains(query) ?? false)
-			}
-		}
-
-		private func makeCommandSuggestion(from command: PromptCommand) -> PromptSuggestion {
-			PromptSuggestion(
-				id: command.id,
-				title: command.title,
-				subtitle: command.subtitle,
-				kind: .command,
-				section: command.section,
-				symbolName: command.symbolName
+			let triggerConfig = trigger.triggerConfig
+			let triggerContext = TriggerContext(
+				character: trigger.character,
+				query: trigger.query,
+				text: textView.string,
+				replacementRange: trigger.replacementRange,
+				selectedRange: textView.selectedRange()
 			)
+
+			let action = triggerConfig.onSelect(suggestion, triggerContext)
+			executeTriggerAction(action, replacing: trigger.replacementRange, in: textView)
 		}
 
-		private func handleSlashCommandSelection(
-			_ command: PromptCommand,
-			replacing range: NSRange,
-			in textView: PromptComposerTextView
-		) {
-			switch command.mode {
-			case .insertToken:
-				insertCommandSuggestion(command, replacing: range, in: textView)
-			case .runCommand:
-				removeTriggerText(replacing: range, in: textView)
-				parent.config.onCommandExecuted?(command)
-			}
-		}
-
-		private func normalizedFileSuggestions(from items: [PromptSuggestion]) -> [PromptSuggestion] {
-			items.map { item in
-				guard item.kind == nil else { return item }
-				var normalized = item
-				normalized.kind = .fileMention
-				return normalized
-			}
-		}
-
-		private func insertFileSuggestion(
-			_ suggestion: PromptSuggestion,
+		private func executeTriggerAction(
+			_ action: TriggerAction,
 			replacing range: NSRange,
 			in textView: PromptComposerTextView
 		) {
@@ -342,15 +324,41 @@ public struct PromptComposerView: NSViewRepresentable {
 			let clampedRange = clampRange(range, length: textStorage.length)
 			guard clampedRange.length > 0 else { return }
 
-			let token = makeFileToken(from: suggestion)
+			switch action {
+			case .insertToken(let token):
+				insertToken(token, replacing: clampedRange, in: textView)
+			case .insertText(let text):
+				insertPlainText(text, replacing: clampedRange, in: textView)
+			case .dismiss:
+				removeTriggerText(replacing: clampedRange, in: textView)
+			case .none:
+				break
+			}
+
+			activeSuggestionTrigger = nil
+		}
+
+		private func insertToken(
+			_ token: Token,
+			replacing range: NSRange,
+			in textView: PromptComposerTextView
+		) {
+			guard let textStorage = textView.textStorage else { return }
+
 			let typingAttributes = textView.typingAttributes
 			let tokenFont = (typingAttributes[.font] as? NSFont)
 				?? textView.font
 				?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
 
-			let attachment = TokenAttachment(token: token)
+			// Apply default style from config if token has none
+			var styledToken = token
+			if styledToken.style == nil, let styleProvider = textView.config.defaultTokenStyle {
+				styledToken.style = styleProvider(styledToken.behavior)
+			}
+
+			let attachment = TokenAttachment(token: styledToken)
 			attachment.attachmentCell = TokenAttachmentCell(
-				token: token,
+				token: styledToken,
 				font: tokenFont
 			)
 
@@ -363,59 +371,36 @@ public struct PromptComposerView: NSViewRepresentable {
 			}
 			replacement.append(NSAttributedString(string: " ", attributes: typingAttributes))
 
-			guard textView.shouldChangeText(in: clampedRange, replacementString: replacement.string) else {
+			guard textView.shouldChangeText(in: range, replacementString: replacement.string) else {
 				return
 			}
 
-			textStorage.replaceCharacters(in: clampedRange, with: replacement)
+			textStorage.replaceCharacters(in: range, with: replacement)
 			textView.didChangeText()
 			textView.setSelectedRange(
-				NSRange(location: clampedRange.location + replacement.length, length: 0)
+				NSRange(location: range.location + replacement.length, length: 0)
 			)
-			activeSuggestionTrigger = nil
 		}
 
-		private func insertCommandSuggestion(
-			_ command: PromptCommand,
+		private func insertPlainText(
+			_ text: String,
 			replacing range: NSRange,
 			in textView: PromptComposerTextView
 		) {
 			guard let textStorage = textView.textStorage else { return }
 
-			let clampedRange = clampRange(range, length: textStorage.length)
-			guard clampedRange.length > 0 else { return }
-
-			let token = makeCommandToken(from: command)
 			let typingAttributes = textView.typingAttributes
-			let tokenFont = (typingAttributes[.font] as? NSFont)
-				?? textView.font
-				?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
+			let replacement = NSAttributedString(string: text, attributes: typingAttributes)
 
-			let attachment = TokenAttachment(token: token)
-			attachment.attachmentCell = TokenAttachmentCell(
-				token: token,
-				font: tokenFont
-			)
-
-			let replacement = NSMutableAttributedString(attachment: attachment)
-			if !typingAttributes.isEmpty {
-				replacement.addAttributes(
-					typingAttributes,
-					range: NSRange(location: 0, length: replacement.length)
-				)
-			}
-			replacement.append(NSAttributedString(string: " ", attributes: typingAttributes))
-
-			guard textView.shouldChangeText(in: clampedRange, replacementString: replacement.string) else {
+			guard textView.shouldChangeText(in: range, replacementString: text) else {
 				return
 			}
 
-			textStorage.replaceCharacters(in: clampedRange, with: replacement)
+			textStorage.replaceCharacters(in: range, with: replacement)
 			textView.didChangeText()
 			textView.setSelectedRange(
-				NSRange(location: clampedRange.location + replacement.length, length: 0)
+				NSRange(location: range.location + replacement.length, length: 0)
 			)
-			activeSuggestionTrigger = nil
 		}
 
 		private func removeTriggerText(
@@ -423,45 +408,14 @@ public struct PromptComposerView: NSViewRepresentable {
 			in textView: PromptComposerTextView
 		) {
 			guard let textStorage = textView.textStorage else { return }
-
-			let clampedRange = clampRange(range, length: textStorage.length)
-			guard clampedRange.length > 0 else { return }
-			guard textView.shouldChangeText(in: clampedRange, replacementString: "") else {
+			guard textView.shouldChangeText(in: range, replacementString: "") else {
 				return
 			}
 
-			textStorage.replaceCharacters(in: clampedRange, with: "")
+			textStorage.replaceCharacters(in: range, with: "")
 			textView.didChangeText()
 			textView.setSelectedRange(
-				NSRange(location: clampedRange.location, length: 0)
-			)
-			activeSuggestionTrigger = nil
-		}
-
-		private func makeFileToken(from suggestion: PromptSuggestion) -> Token {
-			var metadata: [String: String] = [
-				"suggestionID": suggestion.id.uuidString
-			]
-			if let subtitle = suggestion.subtitle, !subtitle.isEmpty {
-				metadata["subtitle"] = subtitle
-			}
-			return Token(
-				kind: .fileMention,
-				display: suggestion.title,
-				metadata: metadata
-			)
-		}
-
-		private func makeCommandToken(from command: PromptCommand) -> Token {
-			var metadata = command.metadata
-			metadata["commandID"] = command.id.uuidString
-			metadata["keyword"] = command.keyword
-			let display = command.tokenDisplay ?? command.title
-
-			return Token(
-				kind: .command,
-				display: display,
-				metadata: metadata
+				NSRange(location: range.location, length: 0)
 			)
 		}
 
@@ -472,11 +426,14 @@ public struct PromptComposerView: NSViewRepresentable {
 			return NSRange(location: clampedLocation, length: clampedLength)
 		}
 
+		// MARK: - Trigger detection
+
 		private struct ActiveTrigger {
 			let character: Character
 			let replacementRange: NSRange
 			let anchorRange: NSRange
 			let query: String
+			let triggerConfig: PromptTrigger
 		}
 
 		private func activeTrigger(in text: String, selectedRange: NSRange) -> ActiveTrigger? {
@@ -487,6 +444,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			let caretLocation = min(max(0, selectedRange.location), textLength)
 			guard caretLocation > 0 else { return nil }
 
+			// Scan backward from caret to find potential trigger character
 			var tokenStart = caretLocation - 1
 			while tokenStart >= 0 {
 				let value = nsText.character(at: tokenStart)
@@ -503,7 +461,22 @@ public struct PromptComposerView: NSViewRepresentable {
 
 			guard tokenStart >= 0, tokenStart < caretLocation else { return nil }
 
-			let marker = nsText.character(at: tokenStart)
+			let markerChar = nsText.character(at: tokenStart)
+			guard let scalar = UnicodeScalar(markerChar) else { return nil }
+			let character = Character(scalar)
+
+			// Find matching trigger from config
+			guard let triggerConfig = parent.config.triggers.first(where: { $0.character == character }) else {
+				return nil
+			}
+
+			// Check leading boundary requirement
+			if triggerConfig.requiresLeadingBoundary {
+				let isAtStart = tokenStart == 0
+				let followsWhitespace = !isAtStart && isWhitespaceOrNewline(nsText.character(at: tokenStart - 1))
+				guard isAtStart || followsWhitespace else { return nil }
+			}
+
 			let replacementRange = NSRange(
 				location: tokenStart,
 				length: caretLocation - tokenStart
@@ -515,29 +488,13 @@ public struct PromptComposerView: NSViewRepresentable {
 			let query = queryRange.length > 0 ? nsText.substring(with: queryRange) : ""
 			let anchorRange = NSRange(location: caretLocation, length: 0)
 
-			if marker == 64 /* @ */ {
-				return ActiveTrigger(
-					character: "@",
-					replacementRange: replacementRange,
-					anchorRange: anchorRange,
-					query: query
-				)
-			}
-
-			if marker == 47 /* / */ {
-				let isAtStart = tokenStart == 0
-				let followsWhitespace = !isAtStart && isWhitespaceOrNewline(nsText.character(at: tokenStart - 1))
-				guard isAtStart || followsWhitespace else { return nil }
-
-				return ActiveTrigger(
-					character: "/",
-					replacementRange: replacementRange,
-					anchorRange: anchorRange,
-					query: query
-				)
-			}
-
-			return nil
+			return ActiveTrigger(
+				character: character,
+				replacementRange: replacementRange,
+				anchorRange: anchorRange,
+				query: query,
+				triggerConfig: triggerConfig
+			)
 		}
 
 		private func isWhitespaceOrNewline(_ value: unichar) -> Bool {

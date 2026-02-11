@@ -8,16 +8,7 @@ struct PromptSuggestionRowButton: View {
 	let onSelect: (PromptSuggestionIndexedItem) -> Void
 
 	private var kindLabel: String {
-		switch indexed.item.kind {
-		case .variable?:
-			return "Variable suggestion"
-		case .fileMention?:
-			return "File suggestion"
-		case .command?:
-			return "Command suggestion"
-		case nil:
-			return "Suggestion"
-		}
+		"Suggestion"
 	}
 
 	private var accessibilityLabelText: String {
@@ -58,21 +49,21 @@ struct PromptSuggestionRowButton: View {
 #Preview("Compact") {
 	VStack(spacing: 0) {
 		PromptSuggestionRowButton(
-			indexed: PromptSuggestionIndexedItem(index: 0, item: PromptSuggestion(title: "Budget.xlsx", kind: .fileMention, symbolName: "tablecells")),
+			indexed: PromptSuggestionIndexedItem(index: 0, item: PromptSuggestion(title: "Budget.xlsx", symbolName: "tablecells")),
 			isSelected: false,
 			isCompact: true,
 			showsDivider: true,
 			onSelect: { _ in }
 		)
 		PromptSuggestionRowButton(
-			indexed: PromptSuggestionIndexedItem(index: 1, item: PromptSuggestion(title: "Q1 Plan.md", kind: .fileMention, symbolName: "doc.text")),
+			indexed: PromptSuggestionIndexedItem(index: 1, item: PromptSuggestion(title: "Q1 Plan.md", symbolName: "doc.text")),
 			isSelected: true,
 			isCompact: true,
 			showsDivider: true,
 			onSelect: { _ in }
 		)
 		PromptSuggestionRowButton(
-			indexed: PromptSuggestionIndexedItem(index: 2, item: PromptSuggestion(title: "Interview Notes.txt", kind: .fileMention, symbolName: "note.text")),
+			indexed: PromptSuggestionIndexedItem(index: 2, item: PromptSuggestion(title: "Interview Notes.txt", symbolName: "note.text")),
 			isSelected: false,
 			isCompact: true,
 			showsDivider: false,

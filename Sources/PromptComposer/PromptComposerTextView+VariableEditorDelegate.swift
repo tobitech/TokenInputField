@@ -80,7 +80,7 @@ extension PromptComposerTextView {
 	}
 
 	func handleVariableEditorTabNavigation(forward: Bool) -> Bool {
-		guard config.variableTokenTabNavigationEnabled else {
+		guard config.editableTokenTabNavigationEnabled else {
 			commitVariableEditorChanges()
 			return true
 		}

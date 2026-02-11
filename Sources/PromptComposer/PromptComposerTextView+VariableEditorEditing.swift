@@ -97,7 +97,7 @@ extension PromptComposerTextView {
 		var updated = token
 		let trimmed = editedValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-		guard token.kind == .variable else {
+		guard token.behavior == .editable else {
 			updated.display = trimmed.isEmpty ? token.display : trimmed
 			return updated
 		}

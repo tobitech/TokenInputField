@@ -36,7 +36,7 @@ extension PromptComposerTextView {
 		let fallbackFont = font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
 		let fallbackTextColor = preferredVariableEditorTextColor(
 			tokenTextColor: TokenAttachmentCell.defaultTextColor(for: token),
-			kind: token.kind
+			behavior: token.behavior
 		)
 		let fallbackBackgroundColor = TokenAttachmentCell.defaultBackgroundColor(for: token)
 		let defaultStyle = VariableEditorStyle(
@@ -64,7 +64,7 @@ extension PromptComposerTextView {
 
 		return VariableEditorStyle(
 			font: cell.tokenFont,
-			textColor: preferredVariableEditorTextColor(tokenTextColor: cell.textColor, kind: token.kind),
+			textColor: preferredVariableEditorTextColor(tokenTextColor: cell.textColor, behavior: token.behavior),
 			backgroundColor: cell.backgroundColor,
 			horizontalPadding: cell.horizontalPadding,
 			verticalPadding: cell.verticalPadding,
@@ -102,8 +102,8 @@ extension PromptComposerTextView {
 		return NSColor.textBackgroundColor
 	}
 
-	func preferredVariableEditorTextColor(tokenTextColor: NSColor, kind: TokenKind) -> NSColor {
-		guard kind == .variable else { return tokenTextColor }
+	func preferredVariableEditorTextColor(tokenTextColor: NSColor, behavior: TokenBehavior) -> NSColor {
+		guard behavior == .editable else { return tokenTextColor }
 		return tokenTextColor
 	}
 
@@ -197,7 +197,7 @@ extension PromptComposerTextView {
 	}
 
 	func variableEditorInitialValue(for token: Token) -> String {
-		guard token.kind == .variable else { return token.display }
+		guard token.behavior == .editable else { return token.display }
 		if let value = TokenAttachmentCell.variableResolvedValue(for: token) {
 			return value
 		}
@@ -205,7 +205,7 @@ extension PromptComposerTextView {
 	}
 
 	func variableEditorPlaceholderText(for token: Token) -> String? {
-		guard token.kind == .variable else { return nil }
+		guard token.behavior == .editable else { return nil }
 		return TokenAttachmentCell.variablePlaceholderText(for: token) ?? "Variable"
 	}
 

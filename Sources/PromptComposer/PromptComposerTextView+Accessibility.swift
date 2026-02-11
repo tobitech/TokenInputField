@@ -13,8 +13,8 @@ extension PromptComposerTextView {
 	}
 
 	func tokenAccessibilityLabel(for token: Token) -> String {
-		switch token.kind {
-		case .variable:
+		switch token.behavior {
+		case .editable:
 			let placeholder = TokenAttachmentCell.variablePlaceholderText(for: token)
 			let value = TokenAttachmentCell.variableResolvedValue(for: token)
 			if let placeholder, let value {
@@ -26,13 +26,13 @@ extension PromptComposerTextView {
 			if let placeholder {
 				return "Variable \(placeholder), empty"
 			}
-			return "Variable token"
-		case .fileMention:
-			let label = token.display.isEmpty ? "file" : token.display
-			return "File \(label)"
-		case .command:
-			let label = token.display.isEmpty ? "command" : token.display
-			return "Command \(label)"
+			return "Editable token"
+		case .dismissible:
+			let label = token.display.isEmpty ? token.kind.rawValue : token.display
+			return "\(token.kind.rawValue.capitalized) \(label), removable"
+		case .standard:
+			let label = token.display.isEmpty ? token.kind.rawValue : token.display
+			return "\(token.kind.rawValue.capitalized) \(label)"
 		}
 	}
 

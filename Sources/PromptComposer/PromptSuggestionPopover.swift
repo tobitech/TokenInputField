@@ -48,11 +48,11 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 		}
 	}
 
-	func update(items: [PromptSuggestion], anchorRange: NSRange?, isCompact: Bool) {
+	func update(items: [PromptSuggestion], anchorRange: NSRange?, isCompact: Bool, sizing: PromptSuggestionPanelSizing? = nil) {
 		viewModel.isCompact = isCompact
 		viewModel.updateItems(items)
 		self.anchorRange = anchorRange
-		applySizingFromConfig(isCompact: isCompact)
+		applySizing(sizing, isCompact: isCompact)
 		rebuildListView()
 
 		guard !items.isEmpty else {
@@ -163,10 +163,14 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 		panel.setFrame(frame, display: panel.isVisible)
 	}
 
-	private func applySizingFromConfig(isCompact: Bool) {
+	private func applySizing(_ explicitSizing: PromptSuggestionPanelSizing?, isCompact: Bool) {
 		isCompactMode = isCompact
-		guard let config = textView?.config else { return }
-		sizing = config.suggestionPanelSizing.clamped
+		if let explicitSizing {
+			sizing = explicitSizing.clamped
+		} else {
+			guard let config = textView?.config else { return }
+			sizing = config.defaultPanelSizing.clamped
+		}
 	}
 
 	private func rebuildListView() {

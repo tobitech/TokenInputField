@@ -40,7 +40,7 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 		field.isBezeled = false
 		field.focusRingType = .none
 		field.drawsBackground = false
-		field.backgroundColor = TokenAttachmentCell.defaultBackgroundColor(for: .variable)
+		field.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.14)
 		field.textColor = NSColor.controlAccentColor
 		field.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
 		field.cell?.lineBreakMode = .byClipping
@@ -188,7 +188,7 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 	}
 
 	func handleTabNavigationCommand(forward: Bool) -> Bool {
-		guard config.variableTokenTabNavigationEnabled else { return false }
+		guard config.editableTokenTabNavigationEnabled else { return false }
 		guard suggestionController?.isVisible != true else { return false }
 
 		if let active = activeVariableEditorContext {
@@ -310,6 +310,21 @@ final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
 		didChangeText()
 		setSelectedRange(NSRange(location: adjustedRange.location, length: 0))
 		return false
+	}
+
+	func dismissToken(at charIndex: Int) {
+		guard let textStorage else { return }
+		guard let context = tokenContext(containing: charIndex, in: textStorage) else { return }
+		guard context.token.behavior == .dismissible else { return }
+
+		let tokenRange = context.range
+		let token = context.token
+		guard shouldChangeText(in: tokenRange, replacementString: "") else { return }
+
+		textStorage.replaceCharacters(in: tokenRange, with: "")
+		didChangeText()
+		setSelectedRange(NSRange(location: tokenRange.location, length: 0))
+		config.onTokenDismissed?(token)
 	}
 
 	override func accessibilityString(for range: NSRange) -> String? {

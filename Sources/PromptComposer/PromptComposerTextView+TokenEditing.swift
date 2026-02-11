@@ -129,17 +129,24 @@ extension PromptComposerTextView {
 		return nil
 	}
 
-	func variableTokenContext(
+	func editableTokenContext(
 		containing location: Int,
 		in textStorage: NSTextStorage
 	) -> ActiveVariableEditorContext? {
 		guard
 			let context = tokenContext(containing: location, in: textStorage),
-			context.token.kind == .variable
+			context.token.behavior == .editable
 		else {
 			return nil
 		}
 		return ActiveVariableEditorContext(range: context.range, token: context.token)
+	}
+
+	func variableTokenContext(
+		containing location: Int,
+		in textStorage: NSTextStorage
+	) -> ActiveVariableEditorContext? {
+		editableTokenContext(containing: location, in: textStorage)
 	}
 
 	func tokenContexts(in textStorage: NSTextStorage) -> [TokenContext] {
@@ -163,17 +170,25 @@ extension PromptComposerTextView {
 		return contexts.sorted { $0.range.location < $1.range.location }
 	}
 
-	func variableTokenRanges(in textStorage: NSTextStorage) -> [NSRange] {
+	func editableTokenRanges(in textStorage: NSTextStorage) -> [NSRange] {
 		tokenContexts(in: textStorage)
-			.filter { $0.token.kind == .variable }
+			.filter { $0.token.behavior == .editable }
 			.map(\.range)
 	}
 
-	func unresolvedVariableTokenContexts(in textStorage: NSTextStorage) -> [TokenContext] {
+	func variableTokenRanges(in textStorage: NSTextStorage) -> [NSRange] {
+		editableTokenRanges(in: textStorage)
+	}
+
+	func unresolvedEditableTokenContexts(in textStorage: NSTextStorage) -> [TokenContext] {
 		tokenContexts(in: textStorage).filter { context in
-			context.token.kind == .variable
+			context.token.behavior == .editable
 				&& !TokenAttachmentCell.isVariableResolved(context.token)
 		}
+	}
+
+	func unresolvedVariableTokenContexts(in textStorage: NSTextStorage) -> [TokenContext] {
+		unresolvedEditableTokenContexts(in: textStorage)
 	}
 
 	func focusAdjacentUnresolvedVariableToken(from selection: NSRange, forward: Bool) -> Bool {
@@ -220,10 +235,10 @@ extension PromptComposerTextView {
 				?? contexts[contexts.count - 1]
 		}
 
-		switch targetContext.token.kind {
-		case .variable:
+		switch targetContext.token.behavior {
+		case .editable:
 			beginVariableTokenEditing(at: targetContext.range.location, suggestedCellFrame: nil)
-		case .fileMention, .command:
+		case .dismissible, .standard:
 			setSelectedRange(targetContext.range)
 			scrollRangeToVisible(targetContext.range)
 		}
