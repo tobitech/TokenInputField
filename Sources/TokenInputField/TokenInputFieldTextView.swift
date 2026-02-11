@@ -33,6 +33,33 @@ final class TokenInputFieldTextView: NSTextView, NSTextFieldDelegate {
 	var isCommittingVariableEdit = false
 	var isTransitioningToVariableEditor = false
 	var activeVariableEditorStyle: VariableEditorStyle?
+	var centersSingleLineContentVertically = false {
+		didSet {
+			guard oldValue != centersSingleLineContentVertically else { return }
+			needsLayout = true
+			needsDisplay = true
+		}
+	}
+	var measuredTextContentHeight: CGFloat = 0 {
+		didSet {
+			guard abs(oldValue - measuredTextContentHeight) > 0.5 else { return }
+			needsLayout = true
+			needsDisplay = true
+		}
+	}
+
+	override var textContainerOrigin: NSPoint {
+		var origin = super.textContainerOrigin
+		guard centersSingleLineContentVertically else { return origin }
+
+		let availableHeight = enclosingScrollView?.contentView.bounds.height ?? bounds.height
+		let contentHeight = measuredTextContentHeight
+		guard availableHeight > 0, contentHeight > 0 else { return origin }
+
+		let centeredY = (availableHeight - contentHeight) * 0.5
+		origin.y = max(origin.y, floor(centeredY))
+		return origin
+	}
 
 	lazy var variableEditorField: VariableTokenEditorField = {
 		let field = VariableTokenEditorField(frame: .zero)
@@ -271,10 +298,11 @@ final class TokenInputFieldTextView: NSTextView, NSTextFieldDelegate {
 			.paragraphStyle: defaultParagraphStyle ?? NSParagraphStyle.default,
 		]
 		let placeholder = NSAttributedString(string: config.placeholderText, attributes: attrs)
-		let inset = textContainerInset
+		guard let textContainer else { return }
+		let origin = textContainerOrigin
 		let containerOrigin = NSPoint(
-			x: inset.width + textContainer!.lineFragmentPadding,
-			y: inset.height
+			x: origin.x + textContainer.lineFragmentPadding,
+			y: origin.y
 		)
 		placeholder.draw(at: containerOrigin)
 	}

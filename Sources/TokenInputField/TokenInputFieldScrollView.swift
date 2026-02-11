@@ -127,12 +127,14 @@ public final class TokenInputFieldScrollView: NSScrollView {
 	func updateHeight() {
 		let font = textView.config.font
 		let lineHeight = TokenAttachmentCell.lineHeight(for: font)
+		let typographicLineHeight = ceil(font.ascender - font.descender + font.leading)
 		let minLines = max(1, config.minVisibleLines)
 		let maxLines = max(minLines, config.maxVisibleLines)
 
 		let minHeight = (lineHeight * CGFloat(minLines)) + (textView.textContainerInset.height * 2)
 		let maxHeight = (lineHeight * CGFloat(maxLines)) + (textView.textContainerInset.height * 2)
-		let measured = measuredContentHeight() + (textView.textContainerInset.height * 2)
+		let measuredTextHeight = measuredContentHeight()
+		let measured = measuredTextHeight + (textView.textContainerInset.height * 2)
 		let targetHeight = max(minHeight, min(measured, maxHeight))
 
 		if abs(targetHeight - contentHeight) > 0.5 {
@@ -144,6 +146,10 @@ public final class TokenInputFieldScrollView: NSScrollView {
 		let allowsVerticalScroll = config.hasVerticalScroller && shouldScroll
 		hasVerticalScroller = allowsVerticalScroll
 		verticalScrollElasticity = allowsVerticalScroll ? .automatic : .none
+		let singleLineThreshold = max(lineHeight, typographicLineHeight) + 0.5
+		textView.measuredTextContentHeight = measuredTextHeight
+		textView.centersSingleLineContentVertically = !allowsVerticalScroll
+			&& measuredTextHeight <= singleLineThreshold
 
 		if !allowsVerticalScroll {
 			let currentOrigin = contentView.bounds.origin

@@ -27,8 +27,12 @@ struct StyledEditorDemo: View {
 				.composerBorder(hidden: true)
 				.backgroundColor(NSColor.controlBackgroundColor)
 				.textInsets(NSSize(width: 20, height: 16))
-				.visibleLines(min: 2, max: 8)
+				.visibleLines(min: 1, max: 8)
 				.fixedSize(horizontal: false, vertical: true)
+				.overlay {
+					RoundedRectangle(cornerRadius: 12)
+						.stroke(Color.orange.opacity(0.75), lineWidth: 2)
+				}
 
 			Spacer()
 		}

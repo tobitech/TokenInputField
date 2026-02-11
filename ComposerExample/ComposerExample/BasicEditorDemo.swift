@@ -11,7 +11,12 @@ struct BasicEditorDemo: View {
 
 			TokenInputFieldView(state: $state)
 				.placeholder("Describe a task or ask anything")
+				.composerBorder(hidden: true)
 				.fixedSize(horizontal: false, vertical: true)
+				.overlay {
+					RoundedRectangle(cornerRadius: 25)
+						.stroke(Color.gray.opacity(0.2), lineWidth: 1)
+				}
 
 			GroupBox("State") {
 				Text(state.attributedText.string.isEmpty ? "(empty)" : state.attributedText.string)
