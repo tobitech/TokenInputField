@@ -218,6 +218,17 @@ public struct PromptComposerView: NSViewRepresentable {
 		return copy
 	}
 
+	/// Connects an action handler for committing trigger actions from custom suggestion UI.
+	///
+	/// Use this when a trigger has `showsBuiltInPanel: false` and you provide your own
+	/// selection interface. Call ``PromptComposerActionHandler/commit(_:replacing:)``
+	/// from your UI to insert tokens, text, or dismiss trigger text.
+	public func actionHandler(_ handler: PromptComposerActionHandler) -> Self {
+		var copy = self
+		copy.config.actionHandler = handler
+		return copy
+	}
+
 	public func makeCoordinator() -> Coordinator {
 		Coordinator(parent: self)
 	}
@@ -237,6 +248,12 @@ public struct PromptComposerView: NSViewRepresentable {
 		context.coordinator.scrollView = scrollView
 		context.coordinator.textView = textView
 		scrollView.updateHeight()
+
+		// Wire action handler so external UI can commit trigger actions.
+		config.actionHandler?.executeAction = { [weak coordinator = context.coordinator] action, range in
+			guard let coordinator, let textView = coordinator.textView else { return }
+			coordinator.executeTriggerAction(action, replacing: range, in: textView)
+		}
 
 		if config.autoFocusFirstEditableTokenOnAppear {
 			DispatchQueue.main.async { [weak textView] in
@@ -275,6 +292,12 @@ public struct PromptComposerView: NSViewRepresentable {
 			textView.setSelectedRange(
 				NSRange(location: clampedLocation, length: clampedLength)
 			)
+		}
+
+		// Re-wire action handler on every update so it captures the latest coordinator.
+		config.actionHandler?.executeAction = { [weak coordinator = context.coordinator] action, range in
+			guard let coordinator, let textView = coordinator.textView else { return }
+			coordinator.executeTriggerAction(action, replacing: range, in: textView)
 		}
 	}
 
@@ -496,8 +519,6 @@ public struct PromptComposerView: NSViewRepresentable {
 				return
 			}
 
-			textView.clearSuggestionTriggerHighlight()
-
 			let triggerConfig = trigger.triggerConfig
 			let triggerContext = TriggerContext(
 				character: trigger.character,
@@ -511,12 +532,14 @@ public struct PromptComposerView: NSViewRepresentable {
 			executeTriggerAction(action, replacing: trigger.replacementRange, in: textView)
 		}
 
-		private func executeTriggerAction(
+		fileprivate func executeTriggerAction(
 			_ action: TriggerAction,
 			replacing range: NSRange,
 			in textView: PromptComposerTextView
 		) {
 			guard let textStorage = textView.textStorage else { return }
+
+			textView.clearSuggestionTriggerHighlight()
 
 			let clampedRange = clampRange(range, length: textStorage.length)
 			guard clampedRange.length > 0 else { return }
