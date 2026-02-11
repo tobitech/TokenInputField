@@ -110,6 +110,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	nonisolated let verticalPadding: CGFloat
 	nonisolated let cornerRadius: CGFloat
 	nonisolated let symbolName: String?
+	nonisolated let imageName: String?
 
 	init(
 		token: Token,
@@ -138,6 +139,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 			?? token.style?.cornerRadius
 			?? TokenAttachmentCell.defaultCornerRadius
 		self.symbolName = token.style?.symbolName
+		self.imageName = token.style?.imageName
 		super.init(textCell: "")
 	}
 
@@ -150,6 +152,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		self.verticalPadding = 0
 		self.cornerRadius = TokenAttachmentCell.defaultCornerRadius
 		self.symbolName = nil
+		self.imageName = nil
 		super.init(coder: coder)
 	}
 
@@ -160,8 +163,12 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		return token.display.isEmpty ? token.kind.rawValue : token.display
 	}
 
+	nonisolated private var hasIcon: Bool {
+		symbolName != nil || imageName != nil
+	}
+
 	nonisolated private var iconWidth: CGFloat {
-		guard symbolName != nil else { return 0 }
+		guard hasIcon else { return 0 }
 		let iconFontSize = tokenFont.pointSize * 0.85
 		return ceil(iconFontSize) + Self.iconTextSpacing
 	}
@@ -197,27 +204,28 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 
 		var textX = cellFrame.origin.x + horizontalPadding
 
-		// Draw SF Symbol icon if present
-		if let symbolName {
-			let iconFontSize = tokenFont.pointSize * 0.85
-			if let iconImage = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil) {
-				let iconConfig = NSImage.SymbolConfiguration(pointSize: iconFontSize, weight: .medium)
-				let configured = iconImage.withSymbolConfiguration(iconConfig) ?? iconImage
-				let iconSize = configured.size
-				let iconY = cellFrame.origin.y + (cellFrame.height - iconSize.height) / 2
-				let iconRect = NSRect(x: textX, y: iconY, width: iconSize.width, height: iconSize.height)
+		// Draw icon if present (SF Symbol takes priority, then asset catalog image)
+		let iconResult = resolveIconImage()
+		if let icon = iconResult?.image {
+			let iconSize = icon.size
+			let iconY = cellFrame.origin.y + (cellFrame.height - iconSize.height) / 2
+			let iconRect = NSRect(x: textX, y: iconY, width: iconSize.width, height: iconSize.height)
 
-				// Tint the SF Symbol with the token's text color
-				let tinted = NSImage(size: configured.size, flipped: false) { rect in
-					configured.draw(in: rect)
+			if iconResult?.isSFSymbol == true {
+				// Tint SF Symbols with the token's text color
+				let tinted = NSImage(size: icon.size, flipped: false) { rect in
+					icon.draw(in: rect)
 					self.textColor.setFill()
 					rect.fill(using: .sourceAtop)
 					return true
 				}
 				tinted.draw(in: iconRect)
-
-				textX += ceil(iconSize.width) + Self.iconTextSpacing
+			} else {
+				// Asset catalog images render with their natural colors
+				icon.draw(in: iconRect)
 			}
+
+			textX += ceil(iconSize.width) + Self.iconTextSpacing
 		}
 
 		// Draw text
@@ -259,6 +267,34 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		xPath.lineWidth = 1.2
 		NSColor.secondaryLabelColor.setStroke()
 		xPath.stroke()
+	}
+
+	/// Resolves the icon image from SF Symbol name or asset catalog, sized to match the font.
+	nonisolated private func resolveIconImage() -> (image: NSImage, isSFSymbol: Bool)? {
+		let iconFontSize = tokenFont.pointSize * 0.85
+
+		if let symbolName,
+		   let sfImage = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
+		{
+			let config = NSImage.SymbolConfiguration(pointSize: iconFontSize, weight: .medium)
+			return (sfImage.withSymbolConfiguration(config) ?? sfImage, true)
+		}
+
+		if let imageName, let assetImage = NSImage(named: imageName) {
+			let targetHeight = ceil(iconFontSize)
+			let scale = targetHeight / assetImage.size.height
+			let targetSize = NSSize(
+				width: ceil(assetImage.size.width * scale),
+				height: targetHeight
+			)
+			let resized = NSImage(size: targetSize, flipped: false) { rect in
+				assetImage.draw(in: rect)
+				return true
+			}
+			return (resized, false)
+		}
+
+		return nil
 	}
 
 	/// Returns the rect of the dismiss button within the given cell frame, or nil if not dismissible.

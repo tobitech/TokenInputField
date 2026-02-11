@@ -10,6 +10,9 @@ public struct TokenStyle: Equatable, Sendable {
 	public var backgroundColor: NSColor?
 	/// SF Symbol name drawn before the token text.
 	public var symbolName: String?
+	/// Asset catalog image name drawn before the token text.
+	/// When both `symbolName` and `imageName` are set, `symbolName` takes priority.
+	public var imageName: String?
 	public var cornerRadius: CGFloat?
 	public var horizontalPadding: CGFloat?
 	public var verticalPadding: CGFloat?
@@ -18,6 +21,7 @@ public struct TokenStyle: Equatable, Sendable {
 		textColor: NSColor? = nil,
 		backgroundColor: NSColor? = nil,
 		symbolName: String? = nil,
+		imageName: String? = nil,
 		cornerRadius: CGFloat? = nil,
 		horizontalPadding: CGFloat? = nil,
 		verticalPadding: CGFloat? = nil
@@ -25,6 +29,7 @@ public struct TokenStyle: Equatable, Sendable {
 		self.textColor = textColor
 		self.backgroundColor = backgroundColor
 		self.symbolName = symbolName
+		self.imageName = imageName
 		self.cornerRadius = cornerRadius
 		self.horizontalPadding = horizontalPadding
 		self.verticalPadding = verticalPadding
