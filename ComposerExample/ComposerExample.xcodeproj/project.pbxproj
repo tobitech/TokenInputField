@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A1000001 /* PromptComposer in Frameworks */ = {isa = PBXBuildFile; productRef = A1000002 /* PromptComposer */; };
+		A1000001 /* TokenInputField in Frameworks */ = {isa = PBXBuildFile; productRef = A1000002 /* TokenInputField */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1000001 /* PromptComposer in Frameworks */,
+				A1000001 /* TokenInputField in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = ComposerExample;
 			packageProductDependencies = (
-				A1000002 /* PromptComposer */,
+				A1000002 /* TokenInputField */,
 			);
 			productName = ComposerExample;
 			productReference = A1000010 /* ComposerExample.app */;
@@ -331,9 +331,9 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A1000002 /* PromptComposer */ = {
+		A1000002 /* TokenInputField */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = PromptComposer;
+			productName = TokenInputField;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

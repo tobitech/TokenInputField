@@ -1,16 +1,16 @@
 import AppKit
-import PromptComposer
+import TokenInputField
 import SwiftUI
 
 struct StyledEditorDemo: View {
-	@State private var state = PromptComposerState()
+	@State private var state = TokenInputFieldState()
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 16) {
 			Text("Custom font, colors, border, and text insets.")
 				.foregroundStyle(.secondary)
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.composerFont(.monospacedSystemFont(ofSize: 14, weight: .regular))
 				.textColor(.white)
 				.backgroundColor(NSColor(red: 0.13, green: 0.13, blue: 0.15, alpha: 1))
@@ -19,7 +19,7 @@ struct StyledEditorDemo: View {
 				.visibleLines(min: 3, max: 12)
 				.fixedSize(horizontal: false, vertical: true)
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.composerFont(.systemFont(ofSize: 16, weight: .light))
 				.textColor(.systemIndigo)
 				.composerBorder(hidden: true)

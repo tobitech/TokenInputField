@@ -1,19 +1,19 @@
 import AppKit
-import PromptComposer
+import TokenInputField
 import SwiftUI
 
 struct CustomTriggerUIDemo: View {
-	@State private var state = PromptComposerState()
-	@State private var handler = PromptComposerActionHandler()
+	@State private var state = TokenInputFieldState()
+	@State private var handler = TokenInputFieldActionHandler()
 	@State private var triggerContext: TriggerContext?
-	@State private var suggestions: [PromptSuggestion] = []
+	@State private var suggestions: [TokenInputSuggestion] = []
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 16) {
 			Text("Type **#** to open a custom suggestion list. The built-in panel is disabled — selections commit via `ActionHandler`.")
 				.foregroundStyle(.secondary)
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.visibleLines(min: 2, max: 8)
 				.actionHandler(handler)
 				.trigger("#", isCompact: true, showsBuiltInPanel: false,
@@ -73,7 +73,7 @@ struct CustomTriggerUIDemo: View {
 		.navigationTitle("Custom Trigger UI")
 	}
 
-	private func commitSuggestion(_ suggestion: PromptSuggestion) {
+	private func commitSuggestion(_ suggestion: TokenInputSuggestion) {
 		guard let ctx = triggerContext else { return }
 		handler.commit(
 			.insertToken(Token(

@@ -3,19 +3,19 @@
 import PackageDescription
 
 let package = Package(
-	name: "PromptComposer",
+	name: "TokenInputField",
 	platforms: [
 		.macOS(.v15)
 	],
 	products: [
 		.library(
-			name: "PromptComposer",
-			targets: ["PromptComposer"]
+			name: "TokenInputField",
+			targets: ["TokenInputField"]
 		)
 	],
 	targets: [
 		.target(
-			name: "PromptComposer"
+			name: "TokenInputField"
 		)
 	]
 )

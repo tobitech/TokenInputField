@@ -1,17 +1,17 @@
 import Observation
 
 @MainActor @Observable
-final class PromptSuggestionViewModel {
-	var items: [PromptSuggestion] = []
+final class TokenInputSuggestionViewModel {
+	var items: [TokenInputSuggestion] = []
 	var selectedIndex: Int = 0
 	var isCompact: Bool = false
 
-	var selectedItem: PromptSuggestion? {
+	var selectedItem: TokenInputSuggestion? {
 		guard items.indices.contains(selectedIndex) else { return nil }
 		return items[selectedIndex]
 	}
 
-	func updateItems(_ newItems: [PromptSuggestion]) {
+	func updateItems(_ newItems: [TokenInputSuggestion]) {
 		let normalizedSelectedIndex: Int
 		if newItems.isEmpty {
 			normalizedSelectedIndex = 0
@@ -31,8 +31,8 @@ final class PromptSuggestionViewModel {
 	}
 
 	private static func hasEquivalentDisplayContent(
-		lhs: [PromptSuggestion],
-		rhs: [PromptSuggestion]
+		lhs: [TokenInputSuggestion],
+		rhs: [TokenInputSuggestion]
 	) -> Bool {
 		guard lhs.count == rhs.count else { return false }
 		return zip(lhs, rhs).allSatisfy { left, right in
@@ -52,17 +52,17 @@ final class PromptSuggestionViewModel {
 		selectedIndex = wrappedIndex
 	}
 
-	var groupedItems: [PromptSuggestionSection] {
-		var sections: [PromptSuggestionSection] = []
+	var groupedItems: [TokenInputSuggestionSection] {
+		var sections: [TokenInputSuggestionSection] = []
 		var currentTitle: String?
-		var currentRows: [PromptSuggestionIndexedItem] = []
+		var currentRows: [TokenInputSuggestionIndexedItem] = []
 
 		for (index, item) in items.enumerated() {
 			let normalizedTitle = item.section?.uppercased()
 			if normalizedTitle != currentTitle {
 				if !currentRows.isEmpty {
 					sections.append(
-						PromptSuggestionSection(
+						TokenInputSuggestionSection(
 							id: currentRows[0].index,
 							title: currentTitle,
 							rows: currentRows
@@ -72,12 +72,12 @@ final class PromptSuggestionViewModel {
 				}
 				currentTitle = normalizedTitle
 			}
-			currentRows.append(PromptSuggestionIndexedItem(index: index, item: item))
+			currentRows.append(TokenInputSuggestionIndexedItem(index: index, item: item))
 		}
 
 		if !currentRows.isEmpty {
 			sections.append(
-				PromptSuggestionSection(
+				TokenInputSuggestionSection(
 					id: currentRows[0].index,
 					title: currentTitle,
 					rows: currentRows
@@ -89,15 +89,15 @@ final class PromptSuggestionViewModel {
 	}
 }
 
-struct PromptSuggestionIndexedItem: Identifiable {
+struct TokenInputSuggestionIndexedItem: Identifiable {
 	let index: Int
-	let item: PromptSuggestion
+	let item: TokenInputSuggestion
 
 	var id: Int { index }
 }
 
-struct PromptSuggestionSection: Identifiable {
+struct TokenInputSuggestionSection: Identifiable {
 	let id: Int
 	let title: String?
-	let rows: [PromptSuggestionIndexedItem]
+	let rows: [TokenInputSuggestionIndexedItem]
 }

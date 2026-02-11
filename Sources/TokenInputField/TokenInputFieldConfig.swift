@@ -13,13 +13,13 @@ import Foundation
 /// grow — if there are fewer items the panel shrinks to fit its content.
 /// Values below the static minimums (``minimumWidth`` / ``minimumHeight``)
 /// are clamped automatically.
-public struct PromptSuggestionPanelSizing: Sendable {
+public struct TokenInputSuggestionPanelSizing: Sendable {
 	/// The smallest width the panel will accept (applied via ``clamped``).
 	public static let minimumWidth: CGFloat = 220
 	/// The smallest height the panel will accept (applied via ``clamped``).
 	public static let minimumHeight: CGFloat = 80
 
-	public static let `default` = PromptSuggestionPanelSizing()
+	public static let `default` = TokenInputSuggestionPanelSizing()
 
 	/// Fixed width of the panel in standard mode.
 	public var standardWidth: CGFloat = 415
@@ -51,8 +51,8 @@ public struct PromptSuggestionPanelSizing: Sendable {
 	}
 
 	/// Returns a copy with values clamped to the minimum constraints.
-	public var clamped: PromptSuggestionPanelSizing {
-		PromptSuggestionPanelSizing(
+	public var clamped: TokenInputSuggestionPanelSizing {
+		TokenInputSuggestionPanelSizing(
 			standardWidth: max(Self.minimumWidth, standardWidth),
 			standardMaxHeight: max(Self.minimumHeight, standardMaxHeight),
 			compactWidth: max(Self.minimumWidth, compactWidth),
@@ -67,7 +67,7 @@ public enum GrowthDirection: Sendable {
 	case up
 }
 
-struct PromptComposerConfig {
+struct TokenInputFieldConfig {
 	var isEditable: Bool = true
 	var isSelectable: Bool = true
 
@@ -111,10 +111,10 @@ struct PromptComposerConfig {
 
 	/// Developer-defined trigger characters that activate the suggestion panel.
 	/// Each trigger owns its own suggestion provider, selection handler, and lifecycle callbacks.
-	var triggers: [PromptTrigger] = []
+	var triggers: [TokenInputTrigger] = []
 
 	/// Default panel sizing used when a trigger does not specify its own.
-	var defaultPanelSizing: PromptSuggestionPanelSizing = .default
+	var defaultPanelSizing: TokenInputSuggestionPanelSizing = .default
 
 	/// Enables Tab / Shift-Tab navigation across editable tokens.
 	var editableTokenTabNavigationEnabled: Bool = true
@@ -130,7 +130,7 @@ struct PromptComposerConfig {
 	var defaultTokenStyle: ((TokenBehavior) -> TokenStyle)? = nil
 
 	/// Action handler for committing trigger actions from custom suggestion UI.
-	var actionHandler: PromptComposerActionHandler? = nil
+	var actionHandler: TokenInputFieldActionHandler? = nil
 
 	init() {}
 }

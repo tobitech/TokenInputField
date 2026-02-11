@@ -1,9 +1,9 @@
 import AppKit
-import PromptComposer
+import TokenInputField
 
 enum SampleData {
 	@MainActor static func attributedText() -> NSAttributedString {
-		let document = PromptDocument(segments: [
+		let document = TokenInputDocument(segments: [
 			.text("Generate a high-resolution, professional headshot suitable for a corporate profile picture. The subject should be looking directly at the camera with a "),
 			.token(
 				Token(
@@ -75,27 +75,27 @@ enum SampleData {
 		)
 	}
 
-	nonisolated static func fileSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
-		let files: [PromptSuggestion] = [
-			PromptSuggestion(
+	nonisolated static func fileSuggestions(matching rawQuery: String) -> [TokenInputSuggestion] {
+		let files: [TokenInputSuggestion] = [
+			TokenInputSuggestion(
 				title: "Budget.xlsx",
 				subtitle: "/Finance/Budget.xlsx",
 				section: "Recent files",
 				symbolName: "tablecells"
 			),
-			PromptSuggestion(
+			TokenInputSuggestion(
 				title: "Q1 Plan.md",
 				subtitle: "/Planning/Q1 Plan.md",
 				section: "Recent files",
 				symbolName: "doc.text"
 			),
-			PromptSuggestion(
+			TokenInputSuggestion(
 				title: "ProductRoadmap.pdf",
 				subtitle: "/Roadmap/ProductRoadmap.pdf",
 				section: "Shared",
 				symbolName: "doc.richtext"
 			),
-			PromptSuggestion(
+			TokenInputSuggestion(
 				title: "Interview Notes.txt",
 				subtitle: "/Notes/Interview Notes.txt",
 				section: "Shared",
@@ -112,27 +112,27 @@ enum SampleData {
 		}
 	}
 
-	nonisolated static func commandSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
-		let commands: [PromptSuggestion] = [
-			PromptSuggestion(
+	nonisolated static func commandSuggestions(matching rawQuery: String) -> [TokenInputSuggestion] {
+		let commands: [TokenInputSuggestion] = [
+			TokenInputSuggestion(
 				title: "Research",
 				subtitle: "Access Dia's reasoning model for deeper thinking.",
 				section: "Insert token",
 				symbolName: "lightbulb"
 			),
-			PromptSuggestion(
+			TokenInputSuggestion(
 				title: "Analyze",
 				subtitle: "Analyze this content, looking for bias, patterns, trends, contradictions.",
 				section: "Insert token",
 				symbolName: "magnifyingglass.circle"
 			),
-			PromptSuggestion(
+			TokenInputSuggestion(
 				title: "Explain",
 				subtitle: "Please explain the concept, topic, or content in clear, accessible language.",
 				section: "Run command",
 				symbolName: "lightbulb.max"
 			),
-			PromptSuggestion(
+			TokenInputSuggestion(
 				title: "Summarize",
 				subtitle: "Please provide a clear, concise summary of the attached content.",
 				section: "Run command",
@@ -149,12 +149,12 @@ enum SampleData {
 		}
 	}
 
-	nonisolated static func projectSuggestions(matching rawQuery: String) -> [PromptSuggestion] {
-		let projects: [PromptSuggestion] = [
-			PromptSuggestion(title: "Website Redesign", symbolName: "globe"),
-			PromptSuggestion(title: "Mobile App v2", symbolName: "iphone"),
-			PromptSuggestion(title: "Data Pipeline", symbolName: "arrow.triangle.branch"),
-			PromptSuggestion(title: "Brand Guidelines", symbolName: "paintbrush"),
+	nonisolated static func projectSuggestions(matching rawQuery: String) -> [TokenInputSuggestion] {
+		let projects: [TokenInputSuggestion] = [
+			TokenInputSuggestion(title: "Website Redesign", symbolName: "globe"),
+			TokenInputSuggestion(title: "Mobile App v2", symbolName: "iphone"),
+			TokenInputSuggestion(title: "Data Pipeline", symbolName: "arrow.triangle.branch"),
+			TokenInputSuggestion(title: "Brand Guidelines", symbolName: "paintbrush"),
 		]
 
 		let query = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)

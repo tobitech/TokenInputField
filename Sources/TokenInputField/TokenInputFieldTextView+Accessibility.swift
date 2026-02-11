@@ -1,12 +1,12 @@
 import AppKit
 import Foundation
 
-extension PromptComposerTextView {
+extension TokenInputFieldTextView {
 	func tokenFromAttributes(_ attributes: [NSAttributedString.Key: Any]) -> Token? {
 		if let attachment = attributes[.attachment] as? TokenAttachment {
 			return attachment.token
 		}
-		if let tokenAttribute = attributes[.promptToken] as? PromptTokenAttribute {
+		if let tokenAttribute = attributes[.promptToken] as? TokenInputTokenAttribute {
 			return tokenAttribute.token
 		}
 		return nil

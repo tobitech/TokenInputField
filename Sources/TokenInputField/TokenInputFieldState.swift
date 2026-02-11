@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PromptComposerState: Equatable {
+public struct TokenInputFieldState: Equatable {
 	public var attributedText: NSAttributedString
 	public var selectedRange: NSRange
 	

@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-extension PromptComposerTextView {
+extension TokenInputFieldTextView {
 	@discardableResult
 	func focusFirstVariableTokenIfAvailable() -> Bool {
 		guard let storage = textStorage else { return false }
@@ -134,10 +134,10 @@ extension PromptComposerTextView {
 			return
 		}
 
-		if textStorage.attribute(.promptToken, at: clampedRange.location, effectiveRange: nil) is PromptTokenAttribute {
+		if textStorage.attribute(.promptToken, at: clampedRange.location, effectiveRange: nil) is TokenInputTokenAttribute {
 			textStorage.addAttribute(
 				.promptToken,
-				value: PromptTokenAttribute(token: token),
+				value: TokenInputTokenAttribute(token: token),
 				range: clampedRange
 			)
 			textStorage.edited(.editedAttributes, range: clampedRange, changeInLength: 0)

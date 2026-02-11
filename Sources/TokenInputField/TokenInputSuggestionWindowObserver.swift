@@ -1,6 +1,6 @@
 import AppKit
 
-@MainActor final class PromptSuggestionWindowObserver {
+@MainActor final class TokenInputSuggestionWindowObserver {
 	private weak var observedWindow: NSWindow?
 	private var windowObservers: [NSObjectProtocol] = []
 	private var onChange: (() -> Void)?

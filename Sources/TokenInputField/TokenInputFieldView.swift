@@ -5,14 +5,14 @@ import SwiftUI
 ///
 /// This is the reusable surface you'll embed across screens.
 @MainActor
-public struct PromptComposerView: NSViewRepresentable {
+public struct TokenInputFieldView: NSViewRepresentable {
 
-	public typealias NSViewType = PromptComposerScrollView
+	public typealias NSViewType = TokenInputFieldScrollView
 
-	@Binding private var state: PromptComposerState
-	private var config: PromptComposerConfig = PromptComposerConfig()
+	@Binding private var state: TokenInputFieldState
+	private var config: TokenInputFieldConfig = TokenInputFieldConfig()
 
-	public init(state: Binding<PromptComposerState>) {
+	public init(state: Binding<TokenInputFieldState>) {
 		self._state = state
 	}
 
@@ -162,13 +162,13 @@ public struct PromptComposerView: NSViewRepresentable {
 		requiresLeadingBoundary: Bool = false,
 		isCompact: Bool = false,
 		showsBuiltInPanel: Bool = true,
-		panelSizing: PromptSuggestionPanelSizing? = nil,
-		suggestionsProvider: @escaping @Sendable (TriggerContext) -> [PromptSuggestion],
-		onSelect: @escaping @Sendable (PromptSuggestion, TriggerContext) -> TriggerAction,
+		panelSizing: TokenInputSuggestionPanelSizing? = nil,
+		suggestionsProvider: @escaping @Sendable (TriggerContext) -> [TokenInputSuggestion],
+		onSelect: @escaping @Sendable (TokenInputSuggestion, TriggerContext) -> TriggerAction,
 		onTriggerEvent: (@Sendable (TriggerEvent) -> Void)? = nil
 	) -> Self {
 		var copy = self
-		copy.config.triggers.append(PromptTrigger(
+		copy.config.triggers.append(TokenInputTrigger(
 			character: character,
 			requiresLeadingBoundary: requiresLeadingBoundary,
 			panelSizing: panelSizing,
@@ -182,7 +182,7 @@ public struct PromptComposerView: NSViewRepresentable {
 	}
 
 	/// Sets the default panel sizing used when a trigger does not specify its own.
-	public func defaultPanelSizing(_ sizing: PromptSuggestionPanelSizing) -> Self {
+	public func defaultPanelSizing(_ sizing: TokenInputSuggestionPanelSizing) -> Self {
 		var copy = self
 		copy.config.defaultPanelSizing = sizing
 		return copy
@@ -221,9 +221,9 @@ public struct PromptComposerView: NSViewRepresentable {
 	/// Connects an action handler for committing trigger actions from custom suggestion UI.
 	///
 	/// Use this when a trigger has `showsBuiltInPanel: false` and you provide your own
-	/// selection interface. Call ``PromptComposerActionHandler/commit(_:replacing:)``
+	/// selection interface. Call ``TokenInputFieldActionHandler/commit(_:replacing:)``
 	/// from your UI to insert tokens, text, or dismiss trigger text.
-	public func actionHandler(_ handler: PromptComposerActionHandler) -> Self {
+	public func actionHandler(_ handler: TokenInputFieldActionHandler) -> Self {
 		var copy = self
 		copy.config.actionHandler = handler
 		return copy
@@ -233,8 +233,8 @@ public struct PromptComposerView: NSViewRepresentable {
 		Coordinator(parent: self)
 	}
 
-	public func makeNSView(context: Context) -> PromptComposerScrollView {
-		let textView = PromptComposerTextView()
+	public func makeNSView(context: Context) -> TokenInputFieldScrollView {
+		let textView = TokenInputFieldTextView()
 		textView.config = config
 		textView.delegate = context.coordinator
 		textView.suggestionController = context.coordinator.suggestionController
@@ -244,7 +244,7 @@ public struct PromptComposerView: NSViewRepresentable {
 		textView.textStorage?.setAttributedString(state.attributedText)
 		textView.setSelectedRange(state.selectedRange)
 
-		let scrollView = PromptComposerScrollView(textView: textView, config: config)
+		let scrollView = TokenInputFieldScrollView(textView: textView, config: config)
 		context.coordinator.scrollView = scrollView
 		context.coordinator.textView = textView
 		scrollView.updateHeight()
@@ -264,7 +264,7 @@ public struct PromptComposerView: NSViewRepresentable {
 		return scrollView
 	}
 
-	public func updateNSView(_ nsView: PromptComposerScrollView, context: Context) {
+	public func updateNSView(_ nsView: TokenInputFieldScrollView, context: Context) {
 		let textView = nsView.textView
 
 		// Avoid feedback loops when we're pushing state into AppKit.
@@ -304,16 +304,16 @@ public struct PromptComposerView: NSViewRepresentable {
 	// MARK: - Coordinator
 
 	@MainActor public final class Coordinator: NSObject, NSTextViewDelegate {
-		fileprivate let parent: PromptComposerView
-		fileprivate weak var textView: PromptComposerTextView?
-		fileprivate weak var scrollView: PromptComposerScrollView?
-		fileprivate let suggestionController = PromptSuggestionPanelController()
+		fileprivate let parent: TokenInputFieldView
+		fileprivate weak var textView: TokenInputFieldTextView?
+		fileprivate weak var scrollView: TokenInputFieldScrollView?
+		fileprivate let suggestionController = TokenInputSuggestionPanelController()
 
 		fileprivate var isApplyingSwiftUIUpdate = false
 		private var activeSuggestionTrigger: ActiveTrigger?
 		private var lastTriggerEventCharacter: Character?
 
-		init(parent: PromptComposerView) {
+		init(parent: TokenInputFieldView) {
 			self.parent = parent
 			super.init()
 			suggestionController.onSelectSuggestion = { [weak self] suggestion in
@@ -323,7 +323,7 @@ public struct PromptComposerView: NSViewRepresentable {
 
 		public func textDidChange(_ notification: Notification) {
 			guard !isApplyingSwiftUIUpdate,
-				let tv = notification.object as? PromptComposerTextView
+				let tv = notification.object as? TokenInputFieldTextView
 			else { return }
 
 			// Push the updated attributed string to SwiftUI.
@@ -343,7 +343,7 @@ public struct PromptComposerView: NSViewRepresentable {
 
 		public func textViewDidChangeSelection(_ notification: Notification) {
 			guard !isApplyingSwiftUIUpdate,
-				let tv = notification.object as? PromptComposerTextView
+				let tv = notification.object as? TokenInputFieldTextView
 			else { return }
 
 			let selectedRange = tv.selectedRange()
@@ -368,7 +368,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			toCharacterRange newSelectedCharRange: NSRange
 		) -> NSRange {
 			guard !isApplyingSwiftUIUpdate,
-				let promptTextView = textView as? PromptComposerTextView
+				let promptTextView = textView as? TokenInputFieldTextView
 			else {
 				return newSelectedCharRange
 			}
@@ -386,7 +386,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			at charIndex: Int
 		) {
 			guard !isApplyingSwiftUIUpdate,
-				let promptTextView = textView as? PromptComposerTextView
+				let promptTextView = textView as? TokenInputFieldTextView
 			else { return }
 
 			// Check for dismiss button click on dismissible tokens
@@ -420,7 +420,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			doCommandBy commandSelector: Selector
 		) -> Bool {
 			guard !isApplyingSwiftUIUpdate,
-				let promptTextView = textView as? PromptComposerTextView
+				let promptTextView = textView as? TokenInputFieldTextView
 			else {
 				return false
 			}
@@ -441,7 +441,7 @@ public struct PromptComposerView: NSViewRepresentable {
 
 		// MARK: - Trigger-based suggestion system
 
-		private func updateSuggestions(for promptTextView: PromptComposerTextView) {
+		private func updateSuggestions(for promptTextView: TokenInputFieldTextView) {
 			let selectedRange = promptTextView.selectedRange()
 			let text = promptTextView.string
 			let trigger = activeTrigger(in: text, selectedRange: selectedRange)
@@ -479,7 +479,7 @@ public struct PromptComposerView: NSViewRepresentable {
 				triggerConfig.onTriggerEvent?(.queryChanged(triggerContext))
 			}
 
-			let items: [PromptSuggestion]
+			let items: [TokenInputSuggestion]
 			if triggerConfig.showsBuiltInPanel {
 				items = triggerConfig.suggestionsProvider(triggerContext)
 			} else {
@@ -510,7 +510,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			trigger.triggerConfig.onTriggerEvent?(.deactivated)
 		}
 
-		private func handleSelectedSuggestion(_ suggestion: PromptSuggestion) {
+		private func handleSelectedSuggestion(_ suggestion: TokenInputSuggestion) {
 			guard
 				let textView,
 				let trigger = activeSuggestionTrigger
@@ -535,7 +535,7 @@ public struct PromptComposerView: NSViewRepresentable {
 		fileprivate func executeTriggerAction(
 			_ action: TriggerAction,
 			replacing range: NSRange,
-			in textView: PromptComposerTextView
+			in textView: TokenInputFieldTextView
 		) {
 			guard let textStorage = textView.textStorage else { return }
 
@@ -561,7 +561,7 @@ public struct PromptComposerView: NSViewRepresentable {
 		private func insertToken(
 			_ token: Token,
 			replacing range: NSRange,
-			in textView: PromptComposerTextView
+			in textView: TokenInputFieldTextView
 		) {
 			guard let textStorage = textView.textStorage else { return }
 
@@ -605,7 +605,7 @@ public struct PromptComposerView: NSViewRepresentable {
 		private func insertPlainText(
 			_ text: String,
 			replacing range: NSRange,
-			in textView: PromptComposerTextView
+			in textView: TokenInputFieldTextView
 		) {
 			guard let textStorage = textView.textStorage else { return }
 
@@ -625,7 +625,7 @@ public struct PromptComposerView: NSViewRepresentable {
 
 		private func removeTriggerText(
 			replacing range: NSRange,
-			in textView: PromptComposerTextView
+			in textView: TokenInputFieldTextView
 		) {
 			guard let textStorage = textView.textStorage else { return }
 			guard textView.shouldChangeText(in: range, replacementString: "") else {
@@ -653,7 +653,7 @@ public struct PromptComposerView: NSViewRepresentable {
 			let replacementRange: NSRange
 			let anchorRange: NSRange
 			let query: String
-			let triggerConfig: PromptTrigger
+			let triggerConfig: TokenInputTrigger
 		}
 
 		private func activeTrigger(in text: String, selectedRange: NSRange) -> ActiveTrigger? {

@@ -3,7 +3,7 @@ import AppKit
 /// Visual appearance overrides for a token pill.
 ///
 /// Any `nil` property falls back to the default resolved by ``TokenAttachmentCell``
-/// (or by ``PromptComposerConfig/defaultTokenStyle``).
+/// (or by ``TokenInputFieldConfig/defaultTokenStyle``).
 /// This type is runtime-only and not persisted via `Codable`.
 public struct TokenStyle: Equatable, Sendable {
 	public var textColor: NSColor?

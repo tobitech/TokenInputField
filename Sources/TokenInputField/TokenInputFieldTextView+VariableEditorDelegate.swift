@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-extension PromptComposerTextView {
+extension TokenInputFieldTextView {
 	func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
 		switch commandSelector {
 		case #selector(NSResponder.insertNewline(_:)):

@@ -1,12 +1,12 @@
 import AppKit
 import Foundation
 
-final class PromptComposerTextView: NSTextView, NSTextFieldDelegate {
-	var config: PromptComposerConfig = .init() {
+final class TokenInputFieldTextView: NSTextView, NSTextFieldDelegate {
+	var config: TokenInputFieldConfig = .init() {
 		didSet { applyConfig() }
 	}
 
-	var suggestionController: PromptSuggestionPanelController?
+	var suggestionController: TokenInputSuggestionPanelController?
 
 	struct ActiveVariableEditorContext {
 		let range: NSRange

@@ -6,9 +6,9 @@ import AppKit
 /// ``commit(_:replacing:)`` to insert tokens, text, or dismiss trigger text.
 ///
 /// ```swift
-/// @State private var handler = PromptComposerActionHandler()
+/// @State private var handler = TokenInputFieldActionHandler()
 ///
-/// PromptComposerView(state: $state)
+/// TokenInputFieldView(state: $state)
 ///     .actionHandler(handler)
 ///     .trigger("#", showsBuiltInPanel: false, ...) { event in
 ///         // capture TriggerContext from event
@@ -18,7 +18,7 @@ import AppKit
 /// handler.commit(.insertToken(myToken), replacing: ctx.replacementRange)
 /// ```
 @MainActor
-public final class PromptComposerActionHandler {
+public final class TokenInputFieldActionHandler {
 
 	/// Closure wired by the Coordinator to execute the action inside the editor.
 	internal var executeAction: ((TriggerAction, NSRange) -> Void)?

@@ -1,9 +1,9 @@
 import AppKit
-import PromptComposer
+import TokenInputField
 import SwiftUI
 
 struct EditableTokensDemo: View {
-	@State private var state = PromptComposerState(
+	@State private var state = TokenInputFieldState(
 		attributedText: SampleData.attributedText(),
 		selectedRange: NSRange(location: 0, length: 0)
 	)
@@ -13,7 +13,7 @@ struct EditableTokensDemo: View {
 			Text("Click a token to edit it. **Tab** / **Shift+Tab** to navigate between tokens.")
 				.foregroundStyle(.secondary)
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.visibleLines(min: 3, max: 10)
 				.editableTokenTabNavigation(true)
 				.autoFocusFirstEditableToken(true)
@@ -26,7 +26,7 @@ struct EditableTokensDemo: View {
 				.fixedSize(horizontal: false, vertical: true)
 
 			GroupBox("Placeholder Export") {
-				let doc = PromptDocument.extractDocument(from: state.attributedText)
+				let doc = TokenInputDocument.extractDocument(from: state.attributedText)
 				Text(doc.exportPlaceholders())
 					.textSelection(.enabled)
 					.frame(maxWidth: .infinity, alignment: .leading)

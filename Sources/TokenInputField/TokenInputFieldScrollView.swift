@@ -3,13 +3,13 @@ import AppKit
 /// NSScrollView container that hosts the NSTextView.
 ///
 /// Returning a scroll view from NSViewRepresentable is the most convenient way to get native scrolling.
-public final class PromptComposerScrollView: NSScrollView {
+public final class TokenInputFieldScrollView: NSScrollView {
 
-	let textView: PromptComposerTextView
-	private var config: PromptComposerConfig
+	let textView: TokenInputFieldTextView
+	private var config: TokenInputFieldConfig
 	private var contentHeight: CGFloat = 0
 
-	init(textView: PromptComposerTextView, config: PromptComposerConfig) {
+	init(textView: TokenInputFieldTextView, config: TokenInputFieldConfig) {
 		self.textView = textView
 		self.config = config
 		super.init(frame: .zero)
@@ -46,7 +46,7 @@ public final class PromptComposerScrollView: NSScrollView {
 		NSSize(width: NSView.noIntrinsicMetric, height: contentHeight)
 	}
 
-	func applyConfig(_ config: PromptComposerConfig) {
+	func applyConfig(_ config: TokenInputFieldConfig) {
 		self.config = config
 
 		hasHorizontalScroller = config.hasHorizontalScroller

@@ -4,10 +4,10 @@ import Foundation
 private let tokenPlaceholder: String = "\u{FFFC}"
 
 extension NSAttributedString.Key {
-	static let promptToken = NSAttributedString.Key("PromptComposerKit.promptToken")
+	static let promptToken = NSAttributedString.Key("TokenInputFieldKit.promptToken")
 }
 
-final class PromptTokenAttribute: NSObject {
+final class TokenInputTokenAttribute: NSObject {
 	let token: Token
 
 	init(token: Token) {
@@ -16,7 +16,7 @@ final class PromptTokenAttribute: NSObject {
 }
 
 public final class TokenAttachment: NSTextAttachment {
-	private static let tokenCodingKey = "PromptComposerKit.token"
+	private static let tokenCodingKey = "TokenInputFieldKit.token"
 
 	public let token: Token
 
@@ -69,7 +69,7 @@ public final class TokenAttachment: NSTextAttachment {
 	}
 }
 
-public extension PromptDocument {
+public extension TokenInputDocument {
 	@MainActor func buildAttributedString(
 		baseAttributes: [NSAttributedString.Key: Any] = [:],
 		usesAttachments: Bool = false,
@@ -106,7 +106,7 @@ public extension PromptDocument {
 				} else {
 					let display = token.display.isEmpty ? tokenPlaceholder : token.display
 					var attributes = baseAttributes
-					attributes[.promptToken] = PromptTokenAttribute(token: token)
+					attributes[.promptToken] = TokenInputTokenAttribute(token: token)
 					let attributed = NSAttributedString(string: display, attributes: attributes)
 					output.append(attributed)
 				}
@@ -116,7 +116,7 @@ public extension PromptDocument {
 		return output
 	}
 
-	static func extractDocument(from attributedString: NSAttributedString) -> PromptDocument {
+	static func extractDocument(from attributedString: NSAttributedString) -> TokenInputDocument {
 		let fullRange = NSRange(location: 0, length: attributedString.length)
 		var segments: [Segment] = []
 		func appendText(_ text: String) {
@@ -133,7 +133,7 @@ public extension PromptDocument {
 
 			let substring = (attributedString.string as NSString).substring(with: range)
 
-			if let tokenAttribute = attributes[.promptToken] as? PromptTokenAttribute {
+			if let tokenAttribute = attributes[.promptToken] as? TokenInputTokenAttribute {
 				var token = tokenAttribute.token
 				if !substring.isEmpty, substring != tokenPlaceholder {
 					token.display = substring
@@ -154,6 +154,6 @@ public extension PromptDocument {
 			appendText(substring)
 		}
 
-		return PromptDocument(segments: segments)
+		return TokenInputDocument(segments: segments)
 	}
 }

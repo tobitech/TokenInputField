@@ -29,7 +29,7 @@ public struct TriggerContext: Sendable {
 	}
 }
 
-/// Action returned by a trigger's ``PromptTrigger/onSelect`` closure.
+/// Action returned by a trigger's ``TokenInputTrigger/onSelect`` closure.
 public enum TriggerAction: Sendable {
 	/// Replace the trigger text with a token pill.
 	case insertToken(Token)
@@ -55,15 +55,15 @@ public enum TriggerEvent: Sendable {
 ///
 /// Each trigger owns its own suggestion provider, selection handler, and optional
 /// lifecycle callbacks. This replaces the hardcoded `@` / `/` system.
-struct PromptTrigger: Sendable {
+struct TokenInputTrigger: Sendable {
 	/// The character that activates this trigger (e.g. `@`, `/`, `$`, `#`).
 	var character: Character
 
 	/// When `true`, the trigger character must follow whitespace or be at the start of text.
 	var requiresLeadingBoundary: Bool
 
-	/// Per-trigger panel sizing override. `nil` uses ``PromptComposerConfig/defaultPanelSizing``.
-	var panelSizing: PromptSuggestionPanelSizing?
+	/// Per-trigger panel sizing override. `nil` uses ``TokenInputFieldConfig/defaultPanelSizing``.
+	var panelSizing: TokenInputSuggestionPanelSizing?
 
 	/// Use compact (single-line) rows instead of standard rows.
 	var isCompact: Bool
@@ -73,10 +73,10 @@ struct PromptTrigger: Sendable {
 	var showsBuiltInPanel: Bool
 
 	/// Provides suggestions when this trigger is active.
-	var suggestionsProvider: @Sendable (TriggerContext) -> [PromptSuggestion]
+	var suggestionsProvider: @Sendable (TriggerContext) -> [TokenInputSuggestion]
 
 	/// Called when the user selects a suggestion. The return value controls what happens.
-	var onSelect: @Sendable (PromptSuggestion, TriggerContext) -> TriggerAction
+	var onSelect: @Sendable (TokenInputSuggestion, TriggerContext) -> TriggerAction
 
 	/// Optional lifecycle notifications for custom UI. `nil` = no notifications.
 	var onTriggerEvent: (@Sendable (TriggerEvent) -> Void)?
@@ -84,11 +84,11 @@ struct PromptTrigger: Sendable {
 	init(
 		character: Character,
 		requiresLeadingBoundary: Bool = false,
-		panelSizing: PromptSuggestionPanelSizing? = nil,
+		panelSizing: TokenInputSuggestionPanelSizing? = nil,
 		isCompact: Bool = false,
 		showsBuiltInPanel: Bool = true,
-		suggestionsProvider: @escaping @Sendable (TriggerContext) -> [PromptSuggestion],
-		onSelect: @escaping @Sendable (PromptSuggestion, TriggerContext) -> TriggerAction,
+		suggestionsProvider: @escaping @Sendable (TriggerContext) -> [TokenInputSuggestion],
+		onSelect: @escaping @Sendable (TokenInputSuggestion, TriggerContext) -> TriggerAction,
 		onTriggerEvent: (@Sendable (TriggerEvent) -> Void)? = nil
 	) {
 		self.character = character

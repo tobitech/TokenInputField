@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PromptSuggestion: Identifiable, Equatable, Sendable {
+public struct TokenInputSuggestion: Identifiable, Equatable, Sendable {
 	public var id: UUID
 	public var title: String
 	public var subtitle: String?

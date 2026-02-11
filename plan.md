@@ -1,12 +1,12 @@
-# PromptComposerKit Roadmap
+# TokenInputField Roadmap
 
 Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView + TextKit 2) with inline tokens, @ file mentions, and / commands, wrapped in a reusable SwiftUI API.
 
 ## Phase 0 — Baseline wrapper + TextKit 2 setup
 
 - [x] Step 1 — SwiftUI wrapper (NSViewRepresentable) ✅
-  - Build `PromptComposerView` and `PromptComposerScrollView`.
-  - Host `PromptComposerTextView` inside the scroll view.
+  - Build `TokenInputFieldView` and `TokenInputFieldScrollView`.
+  - Host `TokenInputFieldTextView` inside the scroll view.
   - Bridge selection and text changes through a Coordinator.
   - Done when: view shows, accepts text input, and pushes updates to SwiftUI state.
 
@@ -16,7 +16,7 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
   - Done when: typing and wrapping are smooth and consistent.
 
 - [x] Step 3 — Document model + conversion ✅
-  - Define `PromptDocument = [Segment]` with `text` and `token` cases.
+  - Define `TokenInputDocument = [Segment]` with `text` and `token` cases.
   - Define `Token` with id, kind (variable/file/command), display, and metadata.
   - Implement:
     - `buildAttributedString(from:)`

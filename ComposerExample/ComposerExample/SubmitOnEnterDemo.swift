@@ -1,8 +1,8 @@
-import PromptComposer
+import TokenInputField
 import SwiftUI
 
 struct SubmitOnEnterDemo: View {
-	@State private var state = PromptComposerState()
+	@State private var state = TokenInputFieldState()
 	@State private var messages: [String] = []
 
 	var body: some View {
@@ -27,7 +27,7 @@ struct SubmitOnEnterDemo: View {
 
 			Divider()
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.visibleLines(min: 1, max: 5)
 				.growthDirection(.up)
 				.composerBorder(hidden: true)
@@ -36,7 +36,7 @@ struct SubmitOnEnterDemo: View {
 						.trimmingCharacters(in: .whitespacesAndNewlines)
 					guard !text.isEmpty else { return }
 					messages.append(text)
-					state = PromptComposerState()
+					state = TokenInputFieldState()
 				}
 				.fixedSize(horizontal: false, vertical: true)
 				.padding(8)

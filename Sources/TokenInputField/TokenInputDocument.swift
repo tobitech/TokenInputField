@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PromptDocument: Equatable, Codable, Sendable {
+public struct TokenInputDocument: Equatable, Codable, Sendable {
 	public var segments: [Segment]
 
 	public init(segments: [Segment] = []) {
@@ -139,7 +139,7 @@ public struct TokenKind: RawRepresentable, Hashable, Codable, Sendable {
 	public static let command = TokenKind(rawValue: "command")
 }
 
-public extension PromptDocument {
+public extension TokenInputDocument {
 	enum UnknownPlaceholderStrategy {
 		case preserveLiteralText
 		case omit
@@ -190,7 +190,7 @@ public extension PromptDocument {
 		from string: String,
 		unknownPlaceholderStrategy: UnknownPlaceholderStrategy = .preserveLiteralText,
 		tokenFactory: TokenFactory? = nil
-	) -> PromptDocument {
+	) -> TokenInputDocument {
 		var segments: [Segment] = []
 		var textBuffer = ""
 		var cursor = string.startIndex
@@ -261,7 +261,7 @@ public extension PromptDocument {
 		}
 
 		flushTextBuffer()
-		return PromptDocument(segments: segments)
+		return TokenInputDocument(segments: segments)
 	}
 
 	private static func appendTextSegment(_ text: String, to segments: inout [Segment]) {

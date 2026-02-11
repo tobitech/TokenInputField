@@ -1,11 +1,11 @@
 import SwiftUI
 
-struct PromptSuggestionSectionView: View {
-	let section: PromptSuggestionSection
+struct TokenInputSuggestionSectionView: View {
+	let section: TokenInputSuggestionSection
 	let isCompact: Bool
 	let isFirstSection: Bool
 	let selectedIndex: Int
-	let onSelect: (PromptSuggestionIndexedItem) -> Void
+	let onSelect: (TokenInputSuggestionIndexedItem) -> Void
 
 	private var titleFont: Font {
 		.system(size: isCompact ? 11 : 12, weight: .semibold)
@@ -31,7 +31,7 @@ struct PromptSuggestionSectionView: View {
 
 			VStack(spacing: 0) {
 				ForEach(Array(section.rows.enumerated()), id: \.element.id) { position, indexed in
-					PromptSuggestionRowButton(
+					TokenInputSuggestionRowButton(
 						indexed: indexed,
 						isSelected: indexed.index == selectedIndex,
 						isCompact: isCompact,
@@ -46,13 +46,13 @@ struct PromptSuggestionSectionView: View {
 }
 
 #Preview("Compact — First Section") {
-	PromptSuggestionSectionView(
-		section: PromptSuggestionSection(
+	TokenInputSuggestionSectionView(
+		section: TokenInputSuggestionSection(
 			id: 0,
 			title: "Recent files",
 			rows: [
-				PromptSuggestionIndexedItem(index: 0, item: PromptSuggestion(title: "Budget.xlsx", symbolName: "tablecells")),
-				PromptSuggestionIndexedItem(index: 1, item: PromptSuggestion(title: "Q1 Plan.md", symbolName: "doc.text")),
+				TokenInputSuggestionIndexedItem(index: 0, item: TokenInputSuggestion(title: "Budget.xlsx", symbolName: "tablecells")),
+				TokenInputSuggestionIndexedItem(index: 1, item: TokenInputSuggestion(title: "Q1 Plan.md", symbolName: "doc.text")),
 			]
 		),
 		isCompact: true,
@@ -66,13 +66,13 @@ struct PromptSuggestionSectionView: View {
 }
 
 #Preview("Compact — Non-first Section (divider)") {
-	PromptSuggestionSectionView(
-		section: PromptSuggestionSection(
+	TokenInputSuggestionSectionView(
+		section: TokenInputSuggestionSection(
 			id: 1,
 			title: "Shared",
 			rows: [
-				PromptSuggestionIndexedItem(index: 2, item: PromptSuggestion(title: "ProductRoadmap.pdf", symbolName: "doc.richtext")),
-				PromptSuggestionIndexedItem(index: 3, item: PromptSuggestion(title: "Interview Notes.txt", symbolName: "note.text")),
+				TokenInputSuggestionIndexedItem(index: 2, item: TokenInputSuggestion(title: "ProductRoadmap.pdf", symbolName: "doc.richtext")),
+				TokenInputSuggestionIndexedItem(index: 3, item: TokenInputSuggestion(title: "Interview Notes.txt", symbolName: "note.text")),
 			]
 		),
 		isCompact: true,

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - `Composer/` contains the Swift app sources.
-  - `PromptComposerKit/` is the reusable editor layer (SwiftUI wrapper + AppKit text view).
+  - `TokenInputField/` is the reusable editor layer (SwiftUI wrapper + AppKit text view).
   - `Example/` holds demo UI for manual testing.
   - `Assets.xcassets/` stores app icons and colors.
 - `Composer.xcodeproj/` is the Xcode project file.
@@ -20,7 +20,7 @@
 ## Coding Style & Naming Conventions
 - Swift style: UpperCamelCase for types, lowerCamelCase for methods/properties.
 - Indentation: follow existing files (tabs, 1 tab per level).
-- Keep files small and focused; prefer separate types in `PromptComposerKit/` rather than large monoliths.
+- Keep files small and focused; prefer separate types in `TokenInputField/` rather than large monoliths.
 - No formatter or linter is configured; use Xcode’s default formatting and match adjacent code.
 
 ## Testing Guidelines

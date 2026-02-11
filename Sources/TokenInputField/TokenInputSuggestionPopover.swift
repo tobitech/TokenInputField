@@ -1,32 +1,32 @@
 import AppKit
 import SwiftUI
 
-private final class PromptSuggestionFloatingPanel: NSPanel {
+private final class TokenInputSuggestionFloatingPanel: NSPanel {
 	override var canBecomeKey: Bool { false }
 	override var canBecomeMain: Bool { false }
 }
-@MainActor final class PromptSuggestionPanelController: NSObject {
-	private let panel: PromptSuggestionFloatingPanel
-	private let viewModel = PromptSuggestionViewModel()
-	private let hostingView: NSHostingView<PromptSuggestionListView>
-	private let windowObserver = PromptSuggestionWindowObserver()
+@MainActor final class TokenInputSuggestionPanelController: NSObject {
+	private let panel: TokenInputSuggestionFloatingPanel
+	private let viewModel = TokenInputSuggestionViewModel()
+	private let hostingView: NSHostingView<TokenInputSuggestionListView>
+	private let windowObserver = TokenInputSuggestionWindowObserver()
 	private var anchorRange: NSRange?
-	private var sizing: PromptSuggestionPanelSizing = .default
+	private var sizing: TokenInputSuggestionPanelSizing = .default
 	private var isCompactMode: Bool = false
 
-	weak var textView: PromptComposerTextView?
-	var onSelectSuggestion: ((PromptSuggestion) -> Void)?
+	weak var textView: TokenInputFieldTextView?
+	var onSelectSuggestion: ((TokenInputSuggestion) -> Void)?
 
 	override init() {
-		let defaultSizing = PromptSuggestionPanelSizing.default
+		let defaultSizing = TokenInputSuggestionPanelSizing.default
 		hostingView = NSHostingView(
 			rootView: Self.makeListView(
-				model: PromptSuggestionViewModel(),
+				model: TokenInputSuggestionViewModel(),
 				onSelect: { _ in },
 				sizing: defaultSizing
 			)
 		)
-		panel = PromptSuggestionFloatingPanel(
+		panel = TokenInputSuggestionFloatingPanel(
 			contentRect: NSRect(x: 0, y: 0, width: defaultSizing.standardWidth, height: defaultSizing.standardMaxHeight),
 			styleMask: [.borderless, .nonactivatingPanel],
 			backing: .buffered,
@@ -48,7 +48,7 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 		}
 	}
 
-	func update(items: [PromptSuggestion], anchorRange: NSRange?, isCompact: Bool, sizing: PromptSuggestionPanelSizing? = nil) {
+	func update(items: [TokenInputSuggestion], anchorRange: NSRange?, isCompact: Bool, sizing: TokenInputSuggestionPanelSizing? = nil) {
 		viewModel.isCompact = isCompact
 		viewModel.updateItems(items)
 		self.anchorRange = anchorRange
@@ -127,7 +127,7 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 		}
 	}
 
-	private func select(_ item: PromptSuggestion) {
+	private func select(_ item: TokenInputSuggestion) {
 		let onSelectSuggestion = onSelectSuggestion
 		close()
 		onSelectSuggestion?(item)
@@ -153,7 +153,7 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 		hostingView.invalidateIntrinsicContentSize()
 		hostingView.layoutSubtreeIfNeeded()
 		let fittingSize = hostingView.fittingSize
-		let frame = PromptSuggestionPanelPositioning.frame(
+		let frame = TokenInputSuggestionPanelPositioning.frame(
 			anchorRect: anchorRect,
 			fittingSize: fittingSize,
 			preferredWidth: sizing.width(compact: isCompactMode),
@@ -163,7 +163,7 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 		panel.setFrame(frame, display: panel.isVisible)
 	}
 
-	private func applySizing(_ explicitSizing: PromptSuggestionPanelSizing?, isCompact: Bool) {
+	private func applySizing(_ explicitSizing: TokenInputSuggestionPanelSizing?, isCompact: Bool) {
 		isCompactMode = isCompact
 		if let explicitSizing {
 			sizing = explicitSizing.clamped
@@ -184,11 +184,11 @@ private final class PromptSuggestionFloatingPanel: NSPanel {
 	}
 
 	private static func makeListView(
-		model: PromptSuggestionViewModel,
-		onSelect: @escaping (PromptSuggestion) -> Void,
-		sizing: PromptSuggestionPanelSizing
-	) -> PromptSuggestionListView {
-		PromptSuggestionListView(
+		model: TokenInputSuggestionViewModel,
+		onSelect: @escaping (TokenInputSuggestion) -> Void,
+		sizing: TokenInputSuggestionPanelSizing
+	) -> TokenInputSuggestionListView {
+		TokenInputSuggestionListView(
 			model: model,
 			onSelect: onSelect,
 			sizing: sizing

@@ -6,7 +6,7 @@ struct SuggestionTriggerHighlight {
 	let hasQuery: Bool
 }
 
-extension PromptComposerTextView {
+extension TokenInputFieldTextView {
 
 	func updateSuggestionTriggerHighlight(range: NSRange, character: Character, hasQuery: Bool) {
 		suggestionTriggerHighlight = SuggestionTriggerHighlight(

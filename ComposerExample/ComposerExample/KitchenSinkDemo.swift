@@ -1,9 +1,9 @@
 import AppKit
-import PromptComposer
+import TokenInputField
 import SwiftUI
 
 struct KitchenSinkDemo: View {
-	@State private var state = PromptComposerState(
+	@State private var state = TokenInputFieldState(
 		attributedText: SampleData.attributedText(),
 		selectedRange: NSRange(location: 0, length: 0)
 	)
@@ -18,7 +18,7 @@ struct KitchenSinkDemo: View {
 
 			Spacer(minLength: 0)
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.visibleLines(min: 1, max: 10)
 				.growthDirection(.up)
 				.autoFocusFirstEditableToken(true)
@@ -79,7 +79,7 @@ struct KitchenSinkDemo: View {
 	}
 
 	private var exportedPlaceholderText: String {
-		let document = PromptDocument.extractDocument(from: state.attributedText)
+		let document = TokenInputDocument.extractDocument(from: state.attributedText)
 		return document.exportPlaceholders()
 	}
 }

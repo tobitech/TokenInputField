@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-extension PromptComposerTextView {
+extension TokenInputFieldTextView {
 	func configureVariableEditorField(for token: Token, tokenRange: NSRange) {
 		let style = resolvedVariableEditorStyle(for: token, tokenRange: tokenRange)
 		activeVariableEditorStyle = style

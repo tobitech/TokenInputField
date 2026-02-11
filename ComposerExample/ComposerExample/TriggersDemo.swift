@@ -1,15 +1,15 @@
-import PromptComposer
+import TokenInputField
 import SwiftUI
 
 struct TriggersDemo: View {
-	@State private var state = PromptComposerState()
+	@State private var state = TokenInputFieldState()
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 16) {
 			Text("Type **@** for file mentions (compact) or **/** for slash commands (standard).")
 				.foregroundStyle(.secondary)
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.visibleLines(min: 2, max: 10)
 				// @ trigger — file mentions (compact rows)
 				.trigger("@", isCompact: true,
@@ -46,7 +46,7 @@ struct TriggersDemo: View {
 				.fixedSize(horizontal: false, vertical: true)
 
 			GroupBox("Document") {
-				let doc = PromptDocument.extractDocument(from: state.attributedText)
+				let doc = TokenInputDocument.extractDocument(from: state.attributedText)
 				Text(doc.exportPlaceholders())
 					.textSelection(.enabled)
 					.frame(maxWidth: .infinity, alignment: .leading)

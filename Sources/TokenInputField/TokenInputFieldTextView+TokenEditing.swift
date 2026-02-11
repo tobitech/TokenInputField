@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-extension PromptComposerTextView {
+extension TokenInputFieldTextView {
 	func handleUnresolvedVariableTokenCommand(_ commandSelector: Selector) -> Bool {
 		let movingForward: Bool
 		switch commandSelector {
@@ -122,7 +122,7 @@ extension PromptComposerTextView {
 			return TokenContext(range: effectiveRange, token: attachment.token)
 		}
 
-		if let tokenAttribute = textStorage.attribute(.promptToken, at: location, effectiveRange: &effectiveRange) as? PromptTokenAttribute {
+		if let tokenAttribute = textStorage.attribute(.promptToken, at: location, effectiveRange: &effectiveRange) as? TokenInputTokenAttribute {
 			return TokenContext(range: effectiveRange, token: tokenAttribute.token)
 		}
 
@@ -162,7 +162,7 @@ extension PromptComposerTextView {
 				return
 			}
 
-			if let tokenAttribute = attributes[.promptToken] as? PromptTokenAttribute {
+			if let tokenAttribute = attributes[.promptToken] as? TokenInputTokenAttribute {
 				contexts.append(TokenContext(range: range, token: tokenAttribute.token))
 			}
 		}

@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-struct PromptSuggestionRow: View {
-	let item: PromptSuggestion
+struct TokenInputSuggestionRow: View {
+	let item: TokenInputSuggestion
 	let isSelected: Bool
 	let isCompact: Bool
 
@@ -65,18 +65,18 @@ struct PromptSuggestionRow: View {
 
 #Preview("Compact") {
 	VStack(spacing: 0) {
-		PromptSuggestionRow(
-			item: PromptSuggestion(title: "Budget.xlsx", symbolName: "tablecells"),
+		TokenInputSuggestionRow(
+			item: TokenInputSuggestion(title: "Budget.xlsx", symbolName: "tablecells"),
 			isSelected: false,
 			isCompact: true
 		)
-		PromptSuggestionRow(
-			item: PromptSuggestion(title: "Q1 Plan.md", symbolName: "doc.text"),
+		TokenInputSuggestionRow(
+			item: TokenInputSuggestion(title: "Q1 Plan.md", symbolName: "doc.text"),
 			isSelected: true,
 			isCompact: true
 		)
-		PromptSuggestionRow(
-			item: PromptSuggestion(title: "Interview Notes.txt", symbolName: "note.text"),
+		TokenInputSuggestionRow(
+			item: TokenInputSuggestion(title: "Interview Notes.txt", symbolName: "note.text"),
 			isSelected: false,
 			isCompact: true
 		)
@@ -88,13 +88,13 @@ struct PromptSuggestionRow: View {
 
 #Preview("Standard") {
 	VStack(spacing: 0) {
-		PromptSuggestionRow(
-			item: PromptSuggestion(title: "Budget.xlsx", subtitle: "/Finance/Budget.xlsx", symbolName: "tablecells"),
+		TokenInputSuggestionRow(
+			item: TokenInputSuggestion(title: "Budget.xlsx", subtitle: "/Finance/Budget.xlsx", symbolName: "tablecells"),
 			isSelected: false,
 			isCompact: false
 		)
-		PromptSuggestionRow(
-			item: PromptSuggestion(title: "Q1 Plan.md", subtitle: "/Planning/Q1 Plan.md", symbolName: "doc.text"),
+		TokenInputSuggestionRow(
+			item: TokenInputSuggestion(title: "Q1 Plan.md", subtitle: "/Planning/Q1 Plan.md", symbolName: "doc.text"),
 			isSelected: true,
 			isCompact: false
 		)

@@ -1,15 +1,15 @@
-import PromptComposer
+import TokenInputField
 import SwiftUI
 
 struct BasicEditorDemo: View {
-	@State private var state = PromptComposerState()
+	@State private var state = TokenInputFieldState()
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 16) {
 			Text("The simplest possible setup — just a state binding.")
 				.foregroundStyle(.secondary)
 
-			PromptComposerView(state: $state)
+			TokenInputFieldView(state: $state)
 				.fixedSize(horizontal: false, vertical: true)
 
 			GroupBox("State") {

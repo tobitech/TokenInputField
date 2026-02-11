@@ -1,11 +1,11 @@
 import SwiftUI
 
-struct PromptSuggestionRowButton: View {
-	let indexed: PromptSuggestionIndexedItem
+struct TokenInputSuggestionRowButton: View {
+	let indexed: TokenInputSuggestionIndexedItem
 	let isSelected: Bool
 	let isCompact: Bool
 	let showsDivider: Bool
-	let onSelect: (PromptSuggestionIndexedItem) -> Void
+	let onSelect: (TokenInputSuggestionIndexedItem) -> Void
 
 	private var kindLabel: String {
 		"Suggestion"
@@ -27,7 +27,7 @@ struct PromptSuggestionRowButton: View {
 		Button {
 			onSelect(indexed)
 		} label: {
-			PromptSuggestionRow(
+			TokenInputSuggestionRow(
 				item: indexed.item,
 				isSelected: isSelected,
 				isCompact: isCompact
@@ -48,22 +48,22 @@ struct PromptSuggestionRowButton: View {
 
 #Preview("Compact") {
 	VStack(spacing: 0) {
-		PromptSuggestionRowButton(
-			indexed: PromptSuggestionIndexedItem(index: 0, item: PromptSuggestion(title: "Budget.xlsx", symbolName: "tablecells")),
+		TokenInputSuggestionRowButton(
+			indexed: TokenInputSuggestionIndexedItem(index: 0, item: TokenInputSuggestion(title: "Budget.xlsx", symbolName: "tablecells")),
 			isSelected: false,
 			isCompact: true,
 			showsDivider: true,
 			onSelect: { _ in }
 		)
-		PromptSuggestionRowButton(
-			indexed: PromptSuggestionIndexedItem(index: 1, item: PromptSuggestion(title: "Q1 Plan.md", symbolName: "doc.text")),
+		TokenInputSuggestionRowButton(
+			indexed: TokenInputSuggestionIndexedItem(index: 1, item: TokenInputSuggestion(title: "Q1 Plan.md", symbolName: "doc.text")),
 			isSelected: true,
 			isCompact: true,
 			showsDivider: true,
 			onSelect: { _ in }
 		)
-		PromptSuggestionRowButton(
-			indexed: PromptSuggestionIndexedItem(index: 2, item: PromptSuggestion(title: "Interview Notes.txt", symbolName: "note.text")),
+		TokenInputSuggestionRowButton(
+			indexed: TokenInputSuggestionIndexedItem(index: 2, item: TokenInputSuggestion(title: "Interview Notes.txt", symbolName: "note.text")),
 			isSelected: false,
 			isCompact: true,
 			showsDivider: false,

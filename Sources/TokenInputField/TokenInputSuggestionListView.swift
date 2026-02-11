@@ -1,15 +1,15 @@
 import AppKit
 import SwiftUI
 
-struct PromptSuggestionListView: View {
+struct TokenInputSuggestionListView: View {
 	private static let topScrollAnchorID = "prompt-suggestion-top-anchor"
 	private static let bottomScrollAnchorID = "prompt-suggestion-bottom-anchor"
 
 	@Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
 
-	let model: PromptSuggestionViewModel
-	let onSelect: (PromptSuggestion) -> Void
-	let sizing: PromptSuggestionPanelSizing
+	let model: TokenInputSuggestionViewModel
+	let onSelect: (TokenInputSuggestion) -> Void
+	let sizing: TokenInputSuggestionPanelSizing
 
 	private var isCompact: Bool {
 		model.isCompact
@@ -55,7 +55,7 @@ struct PromptSuggestionListView: View {
 			|| (oldSelectedIndex == 0 && newSelectedIndex == lastIndex)
 	}
 
-	private func select(_ indexed: PromptSuggestionIndexedItem) {
+	private func select(_ indexed: TokenInputSuggestionIndexedItem) {
 		if model.selectedIndex != indexed.index {
 			model.selectedIndex = indexed.index
 		}
@@ -94,7 +94,7 @@ struct PromptSuggestionListView: View {
 						.id(Self.topScrollAnchorID)
 
 					ForEach(Array(model.groupedItems.enumerated()), id: \.element.id) { sectionIndex, section in
-						PromptSuggestionSectionView(
+						TokenInputSuggestionSectionView(
 							section: section,
 							isCompact: isCompact,
 							isFirstSection: sectionIndex == 0,
@@ -145,34 +145,34 @@ struct PromptSuggestionListView: View {
 	}
 }
 
-@MainActor private func makeCompactPreviewModel() -> PromptSuggestionViewModel {
-	let model = PromptSuggestionViewModel()
+@MainActor private func makeCompactPreviewModel() -> TokenInputSuggestionViewModel {
+	let model = TokenInputSuggestionViewModel()
 	model.isCompact = true
 	model.updateItems([
-		PromptSuggestion(title: "Budget.xlsx", section: "Recent files", symbolName: "tablecells"),
-		PromptSuggestion(title: "Q1 Plan.md", section: "Recent files", symbolName: "doc.text"),
-		PromptSuggestion(title: "ProductRoadmap.pdf", section: "Shared", symbolName: "doc.richtext"),
-		PromptSuggestion(title: "Interview Notes.txt", section: "Shared", symbolName: "note.text"),
+		TokenInputSuggestion(title: "Budget.xlsx", section: "Recent files", symbolName: "tablecells"),
+		TokenInputSuggestion(title: "Q1 Plan.md", section: "Recent files", symbolName: "doc.text"),
+		TokenInputSuggestion(title: "ProductRoadmap.pdf", section: "Shared", symbolName: "doc.richtext"),
+		TokenInputSuggestion(title: "Interview Notes.txt", section: "Shared", symbolName: "note.text"),
 	])
 	model.selectedIndex = 1
 	return model
 }
 
-@MainActor private func makeStandardPreviewModel() -> PromptSuggestionViewModel {
-	let model = PromptSuggestionViewModel()
+@MainActor private func makeStandardPreviewModel() -> TokenInputSuggestionViewModel {
+	let model = TokenInputSuggestionViewModel()
 	model.isCompact = false
 	model.updateItems([
-		PromptSuggestion(title: "Summarize", subtitle: "Generate a concise summary", section: "Commands", symbolName: "text.alignleft"),
-		PromptSuggestion(title: "Translate", subtitle: "Translate to another language", section: "Commands", symbolName: "globe"),
-		PromptSuggestion(title: "Fix Grammar", subtitle: "Correct grammar and spelling", section: "Editing", symbolName: "pencil.and.outline"),
-		PromptSuggestion(title: "Expand", subtitle: "Elaborate on the content", section: "Editing", symbolName: "arrow.up.left.and.arrow.down.right"),
+		TokenInputSuggestion(title: "Summarize", subtitle: "Generate a concise summary", section: "Commands", symbolName: "text.alignleft"),
+		TokenInputSuggestion(title: "Translate", subtitle: "Translate to another language", section: "Commands", symbolName: "globe"),
+		TokenInputSuggestion(title: "Fix Grammar", subtitle: "Correct grammar and spelling", section: "Editing", symbolName: "pencil.and.outline"),
+		TokenInputSuggestion(title: "Expand", subtitle: "Elaborate on the content", section: "Editing", symbolName: "arrow.up.left.and.arrow.down.right"),
 	])
 	model.selectedIndex = 2
 	return model
 }
 
 #Preview("Compact Panel") {
-	PromptSuggestionListView(
+	TokenInputSuggestionListView(
 		model: makeCompactPreviewModel(),
 		onSelect: { _ in },
 		sizing: .default
@@ -181,7 +181,7 @@ struct PromptSuggestionListView: View {
 }
 
 #Preview("Standard Panel") {
-	PromptSuggestionListView(
+	TokenInputSuggestionListView(
 		model: makeStandardPreviewModel(),
 		onSelect: { _ in },
 		sizing: .default
