@@ -132,5 +132,11 @@ struct TokenInputFieldConfig {
 	/// Action handler for committing trigger actions from custom suggestion UI.
 	var actionHandler: TokenInputFieldActionHandler? = nil
 
+	/// Placeholder text shown when the editor is empty.
+	var placeholderText: String = ""
+
+	/// Color used for the placeholder text. Defaults to the system placeholder color.
+	var placeholderColor: NSColor = .placeholderTextColor
+
 	init() {}
 }

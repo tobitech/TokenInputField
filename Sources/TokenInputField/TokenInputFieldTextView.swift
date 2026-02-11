@@ -136,7 +136,7 @@ final class TokenInputFieldTextView: NSTextView, NSTextFieldDelegate {
 		// Improve selection/caret behaviour in embedding contexts.
 		usesFindBar = false
 		isIncrementalSearchingEnabled = false
-		setAccessibilityLabel("Prompt composer")
+		setAccessibilityLabel(config.placeholderText.isEmpty ? "Prompt composer" : config.placeholderText)
 		setAccessibilityHelp(
 			config.submitsOnEnter
 				? "Press Return to submit and Shift-Return for a new line. Use Tab or Shift-Tab to navigate tokens."
@@ -257,8 +257,26 @@ final class TokenInputFieldTextView: NSTextView, NSTextFieldDelegate {
 	}
 
 	override func draw(_ dirtyRect: NSRect) {
+		if string.isEmpty && !config.placeholderText.isEmpty {
+			drawPlaceholder(in: dirtyRect)
+		}
 		super.draw(dirtyRect)
 		drawSuggestionTriggerPlaceholder(in: dirtyRect)
+	}
+
+	private func drawPlaceholder(in rect: NSRect) {
+		let attrs: [NSAttributedString.Key: Any] = [
+			.font: config.font,
+			.foregroundColor: config.placeholderColor,
+			.paragraphStyle: defaultParagraphStyle ?? NSParagraphStyle.default,
+		]
+		let placeholder = NSAttributedString(string: config.placeholderText, attributes: attrs)
+		let inset = textContainerInset
+		let containerOrigin = NSPoint(
+			x: inset.width + textContainer!.lineFragmentPadding,
+			y: inset.height
+		)
+		placeholder.draw(at: containerOrigin)
 	}
 
 	func suggestionAnchorScreenRect(for triggerRange: NSRange?) -> NSRect? {

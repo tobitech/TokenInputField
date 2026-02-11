@@ -14,6 +14,7 @@ struct CustomTriggerUIDemo: View {
 				.foregroundStyle(.secondary)
 
 			TokenInputFieldView(state: $state)
+				.placeholder("Describe a task or ask anything")
 				.visibleLines(min: 2, max: 8)
 				.actionHandler(handler)
 				.trigger("#", isCompact: true, showsBuiltInPanel: false,
@@ -21,7 +22,7 @@ struct CustomTriggerUIDemo: View {
 						SampleData.projectSuggestions(matching: ctx.query)
 					},
 					onSelect: { _, _ in .none },
-					onTriggerEvent: { @MainActor event in
+					onTriggerEvent: { event in
 						switch event {
 						case .activated(let ctx), .queryChanged(let ctx):
 							triggerContext = ctx

@@ -10,6 +10,7 @@ struct TriggersDemo: View {
 				.foregroundStyle(.secondary)
 
 			TokenInputFieldView(state: $state)
+				.placeholder("Describe a task or ask anything")
 				.visibleLines(min: 2, max: 10)
 				// @ trigger — file mentions (compact rows)
 				.trigger("@", isCompact: true,

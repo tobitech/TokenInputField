@@ -34,6 +34,20 @@ public struct TokenInputFieldView: NSViewRepresentable {
 		return copy
 	}
 
+	/// Sets placeholder text shown when the editor is empty.
+	public func placeholder(_ text: String) -> Self {
+		var copy = self
+		copy.config.placeholderText = text
+		return copy
+	}
+
+	/// Sets the placeholder text color.
+	public func placeholderColor(_ color: NSColor) -> Self {
+		var copy = self
+		copy.config.placeholderColor = color
+		return copy
+	}
+
 	/// Sets the background color.
 	public func backgroundColor(_ color: NSColor) -> Self {
 		var copy = self
@@ -165,7 +179,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 		panelSizing: TokenInputSuggestionPanelSizing? = nil,
 		suggestionsProvider: @escaping @Sendable (TriggerContext) -> [TokenInputSuggestion],
 		onSelect: @escaping @Sendable (TokenInputSuggestion, TriggerContext) -> TriggerAction,
-		onTriggerEvent: (@Sendable (TriggerEvent) -> Void)? = nil
+		onTriggerEvent: (@MainActor @Sendable (TriggerEvent) -> Void)? = nil
 	) -> Self {
 		var copy = self
 		copy.config.triggers.append(TokenInputTrigger(

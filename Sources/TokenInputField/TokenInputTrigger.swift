@@ -79,7 +79,8 @@ struct TokenInputTrigger: Sendable {
 	var onSelect: @Sendable (TokenInputSuggestion, TriggerContext) -> TriggerAction
 
 	/// Optional lifecycle notifications for custom UI. `nil` = no notifications.
-	var onTriggerEvent: (@Sendable (TriggerEvent) -> Void)?
+	/// Always called on the main actor (from the coordinator).
+	var onTriggerEvent: (@MainActor @Sendable (TriggerEvent) -> Void)?
 
 	init(
 		character: Character,
@@ -89,7 +90,7 @@ struct TokenInputTrigger: Sendable {
 		showsBuiltInPanel: Bool = true,
 		suggestionsProvider: @escaping @Sendable (TriggerContext) -> [TokenInputSuggestion],
 		onSelect: @escaping @Sendable (TokenInputSuggestion, TriggerContext) -> TriggerAction,
-		onTriggerEvent: (@Sendable (TriggerEvent) -> Void)? = nil
+		onTriggerEvent: (@MainActor @Sendable (TriggerEvent) -> Void)? = nil
 	) {
 		self.character = character
 		self.requiresLeadingBoundary = requiresLeadingBoundary

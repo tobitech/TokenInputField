@@ -10,6 +10,7 @@ struct BasicEditorDemo: View {
 				.foregroundStyle(.secondary)
 
 			TokenInputFieldView(state: $state)
+				.placeholder("Describe a task or ask anything")
 				.fixedSize(horizontal: false, vertical: true)
 
 			GroupBox("State") {

@@ -11,6 +11,7 @@ struct StyledEditorDemo: View {
 				.foregroundStyle(.secondary)
 
 			TokenInputFieldView(state: $state)
+				.placeholder("Describe a task or ask anything")
 				.composerFont(.monospacedSystemFont(ofSize: 14, weight: .regular))
 				.textColor(.white)
 				.backgroundColor(NSColor(red: 0.13, green: 0.13, blue: 0.15, alpha: 1))
@@ -20,6 +21,7 @@ struct StyledEditorDemo: View {
 				.fixedSize(horizontal: false, vertical: true)
 
 			TokenInputFieldView(state: $state)
+				.placeholder("Describe a task or ask anything")
 				.composerFont(.systemFont(ofSize: 16, weight: .light))
 				.textColor(.systemIndigo)
 				.composerBorder(hidden: true)
