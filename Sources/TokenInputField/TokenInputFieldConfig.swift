@@ -129,6 +129,11 @@ struct TokenInputFieldConfig {
 	/// Tokens with an explicit `style` set are not affected.
 	var defaultTokenStyle: ((TokenKind) -> TokenStyle)? = nil
 
+	/// Called when a pickable token is clicked.
+	/// The closure receives the token and a `setValue` completion to call with the chosen value.
+	/// The developer decides what UI to present (NSMenu, file picker, color picker, etc.).
+	var onPickableTokenClicked: ((Token, _ setValue: @escaping (String) -> Void) -> Void)? = nil
+
 	/// Action handler for committing trigger actions from custom suggestion UI.
 	var actionHandler: TokenInputFieldActionHandler? = nil
 

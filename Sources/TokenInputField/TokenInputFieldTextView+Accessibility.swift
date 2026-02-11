@@ -27,6 +27,19 @@ extension TokenInputFieldTextView {
 				return "Variable \(placeholder), empty"
 			}
 			return "Editable token"
+		case .pickable:
+			let placeholder = TokenAttachmentCell.variablePlaceholderText(for: token)
+			let value = TokenAttachmentCell.variableResolvedValue(for: token)
+			if let placeholder, let value {
+				return "Pickable \(placeholder): \(value)"
+			}
+			if let value {
+				return "Pickable \(value)"
+			}
+			if let placeholder {
+				return "Pickable \(placeholder), no value selected"
+			}
+			return "Pickable token"
 		case .dismissible:
 			let label = token.display.isEmpty ? "token" : token.display
 			return "\(label), removable"

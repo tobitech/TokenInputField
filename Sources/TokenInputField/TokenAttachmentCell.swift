@@ -7,6 +7,8 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	nonisolated static let iconTextSpacing: CGFloat = 3
 	nonisolated static let dismissButtonSize: CGFloat = 12
 	nonisolated static let dismissButtonSpacing: CGFloat = 4
+	nonisolated static let chevronSize: CGFloat = 8
+	nonisolated static let chevronSpacing: CGFloat = 3
 
 	nonisolated private static func trimmedNonEmpty(_ value: String?) -> String? {
 		guard let value else { return nil }
@@ -14,14 +16,18 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		return trimmed.isEmpty ? nil : trimmed
 	}
 
+	nonisolated private static var valueBasedKinds: Set<TokenKind> {
+		[.editable, .pickable]
+	}
+
 	nonisolated static func variablePlaceholderText(for token: Token) -> String? {
-		guard token.kind == .editable else { return nil }
+		guard valueBasedKinds.contains(token.kind) else { return nil }
 		return trimmedNonEmpty(token.metadata["placeholder"])
 			?? trimmedNonEmpty(token.metadata["key"])
 	}
 
 	nonisolated static func variableResolvedValue(for token: Token) -> String? {
-		guard token.kind == .editable else { return nil }
+		guard valueBasedKinds.contains(token.kind) else { return nil }
 		if let explicitValue = trimmedNonEmpty(token.metadata["value"]) {
 			return explicitValue
 		}
@@ -48,7 +54,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	}
 
 	nonisolated static func defaultTextColor(for kind: TokenKind) -> NSColor {
-		if kind == .editable {
+		if kind == .editable || kind == .pickable {
 			return .secondaryLabelColor
 		}
 		return .labelColor
@@ -58,7 +64,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		if let style = token.style, let textColor = style.textColor {
 			return textColor
 		}
-		if token.kind == .editable {
+		if token.kind == .editable || token.kind == .pickable {
 			return isVariableResolved(token) ? .controlAccentColor : .secondaryLabelColor
 		}
 		return .labelColor
@@ -66,7 +72,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 
 	nonisolated static func defaultBackgroundColor(for kind: TokenKind) -> NSColor {
 		switch kind {
-		case .editable:
+		case .editable, .pickable:
 			return NSColor.controlAccentColor.withAlphaComponent(0.14)
 		case .dismissible:
 			return NSColor.controlAccentColor.withAlphaComponent(0.17)
@@ -79,7 +85,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		if let style = token.style, let bgColor = style.backgroundColor {
 			return bgColor
 		}
-		if token.kind == .editable {
+		if token.kind == .editable || token.kind == .pickable {
 			let alpha: CGFloat = isVariableResolved(token) ? 0.2 : 0.14
 			return NSColor.controlAccentColor.withAlphaComponent(alpha)
 		}
@@ -149,7 +155,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	}
 
 	nonisolated var displayText: String {
-		if token.kind == .editable {
+		if token.kind == .editable || token.kind == .pickable {
 			return Self.variableDisplayText(for: token)
 		}
 		return token.display.isEmpty ? "token" : token.display
@@ -170,13 +176,18 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		return Self.dismissButtonSize + Self.dismissButtonSpacing
 	}
 
+	nonisolated private var chevronWidth: CGFloat {
+		guard token.kind == .pickable else { return 0 }
+		return Self.chevronSize + Self.chevronSpacing
+	}
+
 	nonisolated override func cellSize() -> NSSize {
 		let attributes: [NSAttributedString.Key: Any] = [
 			.font: tokenFont
 		]
 		let textSize = (displayText as NSString).size(withAttributes: attributes)
 		let lineHeight = Self.lineHeight(for: tokenFont, verticalPadding: verticalPadding)
-		let width = ceil(textSize.width + (horizontalPadding * 2) + iconWidth + dismissWidth)
+		let width = ceil(textSize.width + (horizontalPadding * 2) + iconWidth + dismissWidth + chevronWidth)
 		return NSSize(width: width, height: lineHeight)
 	}
 
@@ -235,6 +246,11 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		if token.kind == .dismissible {
 			drawDismissButton(in: cellFrame)
 		}
+
+		// Draw chevron for pickable tokens
+		if token.kind == .pickable {
+			drawChevron(in: cellFrame)
+		}
 	}
 
 	nonisolated private func drawDismissButton(in cellFrame: NSRect) {
@@ -256,6 +272,31 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 			let tinted = NSImage(size: configured.size, flipped: false) { rect in
 				configured.draw(in: rect)
 				NSColor.secondaryLabelColor.setFill()
+				rect.fill(using: .sourceAtop)
+				return true
+			}
+			tinted.draw(in: iconRect)
+		}
+	}
+
+	nonisolated private func drawChevron(in cellFrame: NSRect) {
+		let chevronSize = Self.chevronSize
+		let chevronX = cellFrame.maxX - horizontalPadding - chevronSize
+		let chevronY = cellFrame.origin.y + (cellFrame.height - chevronSize) / 2
+
+		if let chevron = NSImage(systemSymbolName: "chevron.down", accessibilityDescription: "Choose value") {
+			let config = NSImage.SymbolConfiguration(pointSize: chevronSize * 0.85, weight: .semibold)
+			let configured = chevron.withSymbolConfiguration(config) ?? chevron
+			let iconSize = configured.size
+			let iconRect = NSRect(
+				x: chevronX + (chevronSize - iconSize.width) / 2,
+				y: chevronY + (chevronSize - iconSize.height) / 2,
+				width: iconSize.width,
+				height: iconSize.height
+			)
+			let tinted = NSImage(size: configured.size, flipped: false) { rect in
+				configured.draw(in: rect)
+				self.textColor.setFill()
 				rect.fill(using: .sourceAtop)
 				return true
 			}

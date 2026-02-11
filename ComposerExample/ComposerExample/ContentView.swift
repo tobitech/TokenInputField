@@ -6,6 +6,7 @@ enum UseCase: String, CaseIterable, Identifiable {
 	case submitOnEnter = "Submit on Enter"
 	case triggers = "Triggers & Suggestions"
 	case editableTokens = "Editable Tokens"
+	case pickableTokens = "Pickable Tokens"
 	case customTriggerUI = "Custom Trigger UI"
 	case promptField = "Prompt Field"
 	case projectsField = "Projects Field"
@@ -26,6 +27,8 @@ enum UseCase: String, CaseIterable, Identifiable {
 			"@ file mentions and / slash commands"
 		case .editableTokens:
 			"Variable tokens with Tab navigation"
+		case .pickableTokens:
+			"Tokens with developer-defined value pickers"
 		case .customTriggerUI:
 			"External suggestion UI via ActionHandler"
 		case .promptField:
@@ -46,6 +49,7 @@ enum UseCase: String, CaseIterable, Identifiable {
 		case .submitOnEnter: "paperplane"
 		case .triggers: "at"
 		case .editableTokens: "pencil.and.outline"
+		case .pickableTokens: "filemenu.and.selection"
 		case .customTriggerUI: "rectangle.on.rectangle"
 		case .promptField: "cube.transparent"
 		case .projectsField: "folder"
@@ -99,6 +103,8 @@ struct ContentView: View {
 			TriggersDemo()
 		case .editableTokens:
 			EditableTokensDemo()
+		case .pickableTokens:
+			PickableTokensDemo()
 		case .customTriggerUI:
 			CustomTriggerUIDemo()
 		case .promptField:

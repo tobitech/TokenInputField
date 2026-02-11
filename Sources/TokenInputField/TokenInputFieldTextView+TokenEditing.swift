@@ -238,6 +238,9 @@ extension TokenInputFieldTextView {
 		switch targetContext.token.kind {
 		case .editable:
 			beginVariableTokenEditing(at: targetContext.range.location, suggestedCellFrame: nil)
+		case .pickable:
+			setSelectedRange(targetContext.range)
+			scrollRangeToVisible(targetContext.range)
 		case .dismissible, .standard:
 			setSelectedRange(targetContext.range)
 			scrollRangeToVisible(targetContext.range)

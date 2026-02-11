@@ -232,6 +232,18 @@ public struct TokenInputFieldView: NSViewRepresentable {
 		return copy
 	}
 
+	/// Called when a pickable token is clicked.
+	///
+	/// The closure receives the token and a `setValue` completion handler.
+	/// Call `setValue` with the chosen value to update the token's display and metadata.
+	public func onPickableTokenClicked(
+		_ action: @escaping (Token, _ setValue: @escaping (String) -> Void) -> Void
+	) -> Self {
+		var copy = self
+		copy.config.onPickableTokenClicked = action
+		return copy
+	}
+
 	/// Connects an action handler for committing trigger actions from custom suggestion UI.
 	///
 	/// Use this when a trigger has `showsBuiltInPanel: false` and you provide your own
@@ -425,6 +437,16 @@ public struct TokenInputFieldView: NSViewRepresentable {
 				promptTextView.beginVariableTokenEditing(
 					at: charIndex,
 					suggestedCellFrame: cellFrame
+				)
+			}
+
+			// For pickable tokens, invoke the developer-defined action
+			if let tokenCell = cell as? TokenAttachmentCell,
+			   tokenCell.token.kind == .pickable
+			{
+				promptTextView.handlePickableTokenClick(
+					at: charIndex,
+					cellFrame: cellFrame
 				)
 			}
 		}
