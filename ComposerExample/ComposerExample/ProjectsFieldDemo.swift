@@ -9,8 +9,7 @@ struct ProjectsFieldDemo: View {
 		let document = TokenInputDocument(segments: [
 			.token(
 				Token(
-					kind: .command,
-					behavior: .dismissible,
+					kind: .dismissible,
 					display: "Maestro",
 					style: TokenStyle(
 						textColor: NSColor.secondaryLabelColor,

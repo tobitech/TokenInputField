@@ -97,7 +97,7 @@ extension TokenInputFieldTextView {
 		var updated = token
 		let trimmed = editedValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-		guard token.behavior == .editable else {
+		guard token.kind == .editable else {
 			updated.display = trimmed.isEmpty ? token.display : trimmed
 			return updated
 		}

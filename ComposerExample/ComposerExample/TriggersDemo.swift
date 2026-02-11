@@ -19,8 +19,7 @@ struct TriggersDemo: View {
 					},
 					onSelect: { suggestion, _ in
 						.insertToken(Token(
-							kind: .fileMention,
-							behavior: .standard,
+							kind: .standard,
 							display: suggestion.title,
 							style: .accent,
 							metadata: ["path": suggestion.subtitle ?? ""]
@@ -37,8 +36,7 @@ struct TriggersDemo: View {
 							return .dismiss
 						}
 						return .insertToken(Token(
-							kind: .command,
-							behavior: .standard,
+							kind: .standard,
 							display: suggestion.title,
 							style: TokenStyle(symbolName: suggestion.symbolName)
 						))

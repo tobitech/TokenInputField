@@ -15,13 +15,13 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	}
 
 	nonisolated static func variablePlaceholderText(for token: Token) -> String? {
-		guard token.behavior == .editable else { return nil }
+		guard token.kind == .editable else { return nil }
 		return trimmedNonEmpty(token.metadata["placeholder"])
 			?? trimmedNonEmpty(token.metadata["key"])
 	}
 
 	nonisolated static func variableResolvedValue(for token: Token) -> String? {
-		guard token.behavior == .editable else { return nil }
+		guard token.kind == .editable else { return nil }
 		if let explicitValue = trimmedNonEmpty(token.metadata["value"]) {
 			return explicitValue
 		}
@@ -48,7 +48,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	}
 
 	nonisolated static func defaultTextColor(for kind: TokenKind) -> NSColor {
-		if kind == .variable {
+		if kind == .editable {
 			return .secondaryLabelColor
 		}
 		return .labelColor
@@ -58,38 +58,30 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		if let style = token.style, let textColor = style.textColor {
 			return textColor
 		}
-		if token.behavior == .editable {
+		if token.kind == .editable {
 			return isVariableResolved(token) ? .controlAccentColor : .secondaryLabelColor
 		}
 		return .labelColor
 	}
 
 	nonisolated static func defaultBackgroundColor(for kind: TokenKind) -> NSColor {
-		if kind == .variable {
+		switch kind {
+		case .editable:
 			return NSColor.controlAccentColor.withAlphaComponent(0.14)
-		}
-		if kind == .fileMention {
-			return NSColor.controlAccentColor.withAlphaComponent(0.2)
-		}
-		if kind == .command {
+		case .dismissible:
+			return NSColor.controlAccentColor.withAlphaComponent(0.17)
+		case .standard:
 			return NSColor.controlAccentColor.withAlphaComponent(0.17)
 		}
-		return NSColor.controlAccentColor.withAlphaComponent(0.17)
 	}
 
 	nonisolated static func defaultBackgroundColor(for token: Token) -> NSColor {
 		if let style = token.style, let bgColor = style.backgroundColor {
 			return bgColor
 		}
-		if token.behavior == .editable {
+		if token.kind == .editable {
 			let alpha: CGFloat = isVariableResolved(token) ? 0.2 : 0.14
 			return NSColor.controlAccentColor.withAlphaComponent(alpha)
-		}
-		if token.kind == .fileMention {
-			return NSColor.controlAccentColor.withAlphaComponent(0.2)
-		}
-		if token.kind == .command {
-			return NSColor.controlAccentColor.withAlphaComponent(0.17)
 		}
 		return NSColor.controlAccentColor.withAlphaComponent(0.17)
 	}
@@ -144,10 +136,10 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	}
 
 	required init(coder: NSCoder) {
-		self.token = Token(kind: .variable, behavior: .editable, display: "", metadata: [:])
+		self.token = Token(kind: .editable, display: "", metadata: [:])
 		self.tokenFont = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-		self.textColor = Self.defaultTextColor(for: .variable)
-		self.backgroundColor = Self.defaultBackgroundColor(for: .variable)
+		self.textColor = Self.defaultTextColor(for: .editable)
+		self.backgroundColor = Self.defaultBackgroundColor(for: .editable)
 		self.horizontalPadding = TokenAttachmentCell.defaultHorizontalPadding
 		self.verticalPadding = 0
 		self.cornerRadius = TokenAttachmentCell.defaultCornerRadius
@@ -157,10 +149,10 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	}
 
 	nonisolated var displayText: String {
-		if token.behavior == .editable {
+		if token.kind == .editable {
 			return Self.variableDisplayText(for: token)
 		}
-		return token.display.isEmpty ? token.kind.rawValue : token.display
+		return token.display.isEmpty ? "token" : token.display
 	}
 
 	nonisolated private var hasIcon: Bool {
@@ -174,7 +166,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 	}
 
 	nonisolated private var dismissWidth: CGFloat {
-		guard token.behavior == .dismissible else { return 0 }
+		guard token.kind == .dismissible else { return 0 }
 		return Self.dismissButtonSize + Self.dismissButtonSpacing
 	}
 
@@ -240,7 +232,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		(displayText as NSString).draw(at: textOrigin, withAttributes: attributes)
 
 		// Draw dismiss button for dismissible tokens
-		if token.behavior == .dismissible {
+		if token.kind == .dismissible {
 			drawDismissButton(in: cellFrame)
 		}
 	}
@@ -301,7 +293,7 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 
 	/// Returns the rect of the dismiss button within the given cell frame, or nil if not dismissible.
 	nonisolated func dismissButtonRect(in cellFrame: NSRect) -> NSRect? {
-		guard token.behavior == .dismissible else { return nil }
+		guard token.kind == .dismissible else { return nil }
 		let buttonSize = Self.dismissButtonSize
 		let buttonX = cellFrame.maxX - horizontalPadding - buttonSize
 		let buttonY = cellFrame.origin.y + (cellFrame.height - buttonSize) / 2

@@ -361,7 +361,7 @@ final class TokenInputFieldTextView: NSTextView, NSTextFieldDelegate {
 	func dismissToken(at charIndex: Int) {
 		guard let textStorage else { return }
 		guard let context = tokenContext(containing: charIndex, in: textStorage) else { return }
-		guard context.token.behavior == .dismissible else { return }
+		guard context.token.kind == .dismissible else { return }
 
 		let tokenRange = context.range
 		let token = context.token

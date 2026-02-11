@@ -127,7 +127,7 @@ struct TokenInputFieldConfig {
 
 	/// Provides a default ``TokenStyle`` for tokens based on their behavior.
 	/// Tokens with an explicit `style` set are not affected.
-	var defaultTokenStyle: ((TokenBehavior) -> TokenStyle)? = nil
+	var defaultTokenStyle: ((TokenKind) -> TokenStyle)? = nil
 
 	/// Action handler for committing trigger actions from custom suggestion UI.
 	var actionHandler: TokenInputFieldActionHandler? = nil

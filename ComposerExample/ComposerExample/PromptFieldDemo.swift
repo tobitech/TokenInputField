@@ -15,8 +15,7 @@ struct PromptFieldDemo: View {
 		let webAnimDoc = TokenInputDocument(segments: [
 			.token(
 				Token(
-					kind: .command,
-					behavior: .standard,
+					kind: .standard,
 					display: "Web Animation Design",
 					style: TokenStyle(
 						textColor: NSColor.systemPurple,
@@ -40,8 +39,7 @@ struct PromptFieldDemo: View {
 		let githubDoc = TokenInputDocument(segments: [
 			.token(
 				Token(
-					kind: .command,
-					behavior: .standard,
+					kind: .standard,
 					display: "GitHub",
 					style: TokenStyle(
 						textColor: NSColor.systemPurple,

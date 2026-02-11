@@ -19,7 +19,7 @@ extension TokenInputFieldTextView {
 				string: placeholder,
 				attributes: [
 					.font: style.font,
-					.foregroundColor: TokenAttachmentCell.defaultTextColor(for: .variable)
+					.foregroundColor: TokenAttachmentCell.defaultTextColor(for: .editable)
 				]
 			)
 		} else {
@@ -36,7 +36,7 @@ extension TokenInputFieldTextView {
 		let fallbackFont = font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize)
 		let fallbackTextColor = preferredVariableEditorTextColor(
 			tokenTextColor: TokenAttachmentCell.defaultTextColor(for: token),
-			behavior: token.behavior
+			kind: token.kind
 		)
 		let fallbackBackgroundColor = TokenAttachmentCell.defaultBackgroundColor(for: token)
 		let defaultStyle = VariableEditorStyle(
@@ -64,7 +64,7 @@ extension TokenInputFieldTextView {
 
 		return VariableEditorStyle(
 			font: cell.tokenFont,
-			textColor: preferredVariableEditorTextColor(tokenTextColor: cell.textColor, behavior: token.behavior),
+			textColor: preferredVariableEditorTextColor(tokenTextColor: cell.textColor, kind: token.kind),
 			backgroundColor: cell.backgroundColor,
 			horizontalPadding: cell.horizontalPadding,
 			verticalPadding: cell.verticalPadding,
@@ -102,8 +102,8 @@ extension TokenInputFieldTextView {
 		return NSColor.textBackgroundColor
 	}
 
-	func preferredVariableEditorTextColor(tokenTextColor: NSColor, behavior: TokenBehavior) -> NSColor {
-		guard behavior == .editable else { return tokenTextColor }
+	func preferredVariableEditorTextColor(tokenTextColor: NSColor, kind: TokenKind) -> NSColor {
+		guard kind == .editable else { return tokenTextColor }
 		return tokenTextColor
 	}
 
@@ -197,7 +197,7 @@ extension TokenInputFieldTextView {
 	}
 
 	func variableEditorInitialValue(for token: Token) -> String {
-		guard token.behavior == .editable else { return token.display }
+		guard token.kind == .editable else { return token.display }
 		if let value = TokenAttachmentCell.variableResolvedValue(for: token) {
 			return value
 		}
@@ -205,7 +205,7 @@ extension TokenInputFieldTextView {
 	}
 
 	func variableEditorPlaceholderText(for token: Token) -> String? {
-		guard token.behavior == .editable else { return nil }
+		guard token.kind == .editable else { return nil }
 		return TokenAttachmentCell.variablePlaceholderText(for: token) ?? "Variable"
 	}
 

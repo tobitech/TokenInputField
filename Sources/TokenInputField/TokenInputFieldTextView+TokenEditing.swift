@@ -135,7 +135,7 @@ extension TokenInputFieldTextView {
 	) -> ActiveVariableEditorContext? {
 		guard
 			let context = tokenContext(containing: location, in: textStorage),
-			context.token.behavior == .editable
+			context.token.kind == .editable
 		else {
 			return nil
 		}
@@ -172,7 +172,7 @@ extension TokenInputFieldTextView {
 
 	func editableTokenRanges(in textStorage: NSTextStorage) -> [NSRange] {
 		tokenContexts(in: textStorage)
-			.filter { $0.token.behavior == .editable }
+			.filter { $0.token.kind == .editable }
 			.map(\.range)
 	}
 
@@ -182,7 +182,7 @@ extension TokenInputFieldTextView {
 
 	func unresolvedEditableTokenContexts(in textStorage: NSTextStorage) -> [TokenContext] {
 		tokenContexts(in: textStorage).filter { context in
-			context.token.behavior == .editable
+			context.token.kind == .editable
 				&& !TokenAttachmentCell.isVariableResolved(context.token)
 		}
 	}
@@ -235,7 +235,7 @@ extension TokenInputFieldTextView {
 				?? contexts[contexts.count - 1]
 		}
 
-		switch targetContext.token.behavior {
+		switch targetContext.token.kind {
 		case .editable:
 			beginVariableTokenEditing(at: targetContext.range.location, suggestedCellFrame: nil)
 		case .dismissible, .standard:

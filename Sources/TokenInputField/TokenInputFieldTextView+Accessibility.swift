@@ -13,7 +13,7 @@ extension TokenInputFieldTextView {
 	}
 
 	func tokenAccessibilityLabel(for token: Token) -> String {
-		switch token.behavior {
+		switch token.kind {
 		case .editable:
 			let placeholder = TokenAttachmentCell.variablePlaceholderText(for: token)
 			let value = TokenAttachmentCell.variableResolvedValue(for: token)
@@ -28,11 +28,10 @@ extension TokenInputFieldTextView {
 			}
 			return "Editable token"
 		case .dismissible:
-			let label = token.display.isEmpty ? token.kind.rawValue : token.display
-			return "\(token.kind.rawValue.capitalized) \(label), removable"
+			let label = token.display.isEmpty ? "token" : token.display
+			return "\(label), removable"
 		case .standard:
-			let label = token.display.isEmpty ? token.kind.rawValue : token.display
-			return "\(token.kind.rawValue.capitalized) \(label)"
+			return token.display.isEmpty ? "Token" : token.display
 		}
 	}
 

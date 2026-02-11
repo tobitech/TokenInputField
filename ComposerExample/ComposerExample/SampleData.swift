@@ -7,8 +7,7 @@ enum SampleData {
 			.text("Generate a high-resolution, professional headshot suitable for a corporate profile picture. The subject should be looking directly at the camera with a "),
 			.token(
 				Token(
-					kind: .variable,
-					behavior: .editable,
+					kind: .editable,
 					display: "confident",
 					metadata: [
 						"key": "expression",
@@ -19,8 +18,7 @@ enum SampleData {
 			.text(" expression. The lighting should be "),
 			.token(
 				Token(
-					kind: .variable,
-					behavior: .editable,
+					kind: .editable,
 					display: "soft and even",
 					metadata: [
 						"key": "lighting",
@@ -31,8 +29,7 @@ enum SampleData {
 			.text(", and the background should be a solid neutral color like "),
 			.token(
 				Token(
-					kind: .variable,
-					behavior: .editable,
+					kind: .editable,
 					display: "light gray",
 					metadata: [
 						"key": "backgroundColor",
@@ -43,8 +40,7 @@ enum SampleData {
 			.text(". The final image should be in a "),
 			.token(
 				Token(
-					kind: .variable,
-					behavior: .editable,
+					kind: .editable,
 					display: "realistic",
 					metadata: [
 						"key": "style",
@@ -55,8 +51,7 @@ enum SampleData {
 			.text(" style, suitable for "),
 			.token(
 				Token(
-					kind: .variable,
-					behavior: .editable,
+					kind: .editable,
 					display: "LinkedIn",
 					metadata: [
 						"key": "audience",

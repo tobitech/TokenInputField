@@ -12,7 +12,7 @@ struct ToolsFieldDemo: View {
 	@State private var state = TokenInputFieldState()
 	@State private var tools: [AppTool] = []
 
-	private static let appSuggestions: [(name: String, imageName: String)] = [
+	private nonisolated static let appSuggestions: [(name: String, imageName: String)] = [
 		("Gmail", "gmail"),
 		("Slack", "slack"),
 		("Notion", "notion"),
@@ -54,8 +54,7 @@ struct ToolsFieldDemo: View {
 							}
 
 							return .insertToken(Token(
-								kind: .fileMention,
-								behavior: .standard,
+								kind: .standard,
 								display: suggestion.title,
 								style: TokenStyle(
 									textColor: .secondaryLabelColor,
@@ -152,7 +151,7 @@ struct ToolsFieldDemo: View {
 		)
 	}
 
-	private static func suggestions(matching rawQuery: String) -> [TokenInputSuggestion] {
+	private nonisolated static func suggestions(matching rawQuery: String) -> [TokenInputSuggestion] {
 		let all = appSuggestions.map { app in
 			TokenInputSuggestion(
 				title: app.name,

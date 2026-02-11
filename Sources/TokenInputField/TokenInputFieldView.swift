@@ -226,7 +226,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 	/// Provides a default ``TokenStyle`` for tokens based on their behavior.
 	///
 	/// Tokens with an explicit `style` set are not affected.
-	public func defaultTokenStyle(_ provider: @escaping (TokenBehavior) -> TokenStyle) -> Self {
+	public func defaultTokenStyle(_ provider: @escaping (TokenKind) -> TokenStyle) -> Self {
 		var copy = self
 		copy.config.defaultTokenStyle = provider
 		return copy
@@ -405,7 +405,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 
 			// Check for dismiss button click on dismissible tokens
 			if let tokenCell = cell as? TokenAttachmentCell,
-			   tokenCell.token.behavior == .dismissible,
+			   tokenCell.token.kind == .dismissible,
 			   let dismissRect = tokenCell.dismissButtonRect(in: cellFrame)
 			{
 				if let window = promptTextView.window {
@@ -420,7 +420,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 
 			// For editable tokens, begin editing
 			if let tokenCell = cell as? TokenAttachmentCell,
-			   tokenCell.token.behavior == .editable
+			   tokenCell.token.kind == .editable
 			{
 				promptTextView.beginVariableTokenEditing(
 					at: charIndex,
@@ -587,7 +587,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 			// Apply default style from config if token has none
 			var styledToken = token
 			if styledToken.style == nil, let styleProvider = textView.config.defaultTokenStyle {
-				styledToken.style = styleProvider(styledToken.behavior)
+				styledToken.style = styleProvider(styledToken.kind)
 			}
 
 			let attachment = TokenAttachment(token: styledToken)

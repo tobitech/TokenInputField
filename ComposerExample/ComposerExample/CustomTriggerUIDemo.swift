@@ -78,8 +78,7 @@ struct CustomTriggerUIDemo: View {
 		guard let ctx = triggerContext else { return }
 		handler.commit(
 			.insertToken(Token(
-				kind: TokenKind(rawValue: "project"),
-				behavior: .standard,
+				kind: .standard,
 				display: suggestion.title,
 				style: TokenStyle(
 					backgroundColor: NSColor.systemTeal.withAlphaComponent(0.15),
