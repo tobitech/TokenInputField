@@ -2,7 +2,7 @@ import AppKit
 import PromptComposer
 import SwiftUI
 
-struct PromptComposerDemoView: View {
+struct KitchenSinkDemo: View {
 	@State private var state = PromptComposerState(
 		attributedText: SampleData.attributedText(),
 		selectedRange: NSRange(location: 0, length: 0)
@@ -85,5 +85,5 @@ struct PromptComposerDemoView: View {
 }
 
 #Preview {
-	PromptComposerDemoView()
+	KitchenSinkDemo()
 }
