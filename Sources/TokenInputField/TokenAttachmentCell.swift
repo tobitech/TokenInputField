@@ -251,22 +251,24 @@ final class TokenAttachmentCell: NSTextAttachmentCell {
 		let buttonY = cellFrame.origin.y + (cellFrame.height - buttonSize) / 2
 		let buttonRect = NSRect(x: buttonX, y: buttonY, width: buttonSize, height: buttonSize)
 
-		// Draw circle background
-		let circlePath = NSBezierPath(ovalIn: buttonRect.insetBy(dx: 0.5, dy: 0.5))
-		NSColor.secondaryLabelColor.withAlphaComponent(0.3).setFill()
-		circlePath.fill()
-
-		// Draw × symbol
-		let xInset: CGFloat = 3.5
-		let xRect = buttonRect.insetBy(dx: xInset, dy: xInset)
-		let xPath = NSBezierPath()
-		xPath.move(to: NSPoint(x: xRect.minX, y: xRect.minY))
-		xPath.line(to: NSPoint(x: xRect.maxX, y: xRect.maxY))
-		xPath.move(to: NSPoint(x: xRect.maxX, y: xRect.minY))
-		xPath.line(to: NSPoint(x: xRect.minX, y: xRect.maxY))
-		xPath.lineWidth = 1.2
-		NSColor.secondaryLabelColor.setStroke()
-		xPath.stroke()
+		if let xmark = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Dismiss") {
+			let config = NSImage.SymbolConfiguration(pointSize: buttonSize * 0.65, weight: .medium)
+			let configured = xmark.withSymbolConfiguration(config) ?? xmark
+			let iconSize = configured.size
+			let iconRect = NSRect(
+				x: buttonRect.midX - iconSize.width / 2,
+				y: buttonRect.midY - iconSize.height / 2,
+				width: iconSize.width,
+				height: iconSize.height
+			)
+			let tinted = NSImage(size: configured.size, flipped: false) { rect in
+				configured.draw(in: rect)
+				NSColor.secondaryLabelColor.setFill()
+				rect.fill(using: .sourceAtop)
+				return true
+			}
+			tinted.draw(in: iconRect)
+		}
 	}
 
 	/// Resolves the icon image from SF Symbol name or asset catalog, sized to match the font.
