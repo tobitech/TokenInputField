@@ -59,7 +59,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 	///
 	/// Calling this implicitly enables the border.
 	public func composerBorder(
-		color: NSColor = .separatorColor,
+		color: NSColor = .tertiaryLabelColor,
 		width: CGFloat = 1,
 		cornerRadius: CGFloat = 8
 	) -> Self {

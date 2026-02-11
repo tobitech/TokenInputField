@@ -78,7 +78,7 @@ struct TokenInputFieldConfig {
 
 	/// Border styling for the editor container.
 	var showsBorder: Bool = true
-	var borderColor: NSColor = .separatorColor
+	var borderColor: NSColor = .tertiaryLabelColor
 	var borderWidth: CGFloat = 1
 	var cornerRadius: CGFloat = 8
 

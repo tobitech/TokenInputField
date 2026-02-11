@@ -8,6 +8,7 @@ public final class TokenInputFieldScrollView: NSScrollView {
 	let textView: TokenInputFieldTextView
 	private var config: TokenInputFieldConfig
 	private var contentHeight: CGFloat = 0
+	private let borderLayer = CAShapeLayer()
 
 	init(textView: TokenInputFieldTextView, config: TokenInputFieldConfig) {
 		self.textView = textView
@@ -20,6 +21,8 @@ public final class TokenInputFieldScrollView: NSScrollView {
 		hasVerticalScroller = config.hasVerticalScroller
 		hasHorizontalScroller = config.hasHorizontalScroller
 		autohidesScrollers = true
+		verticalScrollElasticity = .none
+		horizontalScrollElasticity = config.hasHorizontalScroller ? .automatic : .none
 
 		// Document view.
 		documentView = textView
@@ -42,6 +45,25 @@ public final class TokenInputFieldScrollView: NSScrollView {
 		fatalError("init(coder:) has not been implemented")
 	}
 
+	public override func viewDidMoveToWindow() {
+		super.viewDidMoveToWindow()
+
+		// Re-apply appearance-driven styling after attachment.
+		// Some hosts finalize backing layer state only once the view is in a window.
+		applyConfig(config)
+	}
+
+	public override func viewDidChangeEffectiveAppearance() {
+		super.viewDidChangeEffectiveAppearance()
+		applyConfig(config)
+	}
+
+	public override func layout() {
+		super.layout()
+		updateHeight()
+		updateBorderPath()
+	}
+
 	public override var intrinsicContentSize: NSSize {
 		NSSize(width: NSView.noIntrinsicMetric, height: contentHeight)
 	}
@@ -50,17 +72,56 @@ public final class TokenInputFieldScrollView: NSScrollView {
 		self.config = config
 
 		hasHorizontalScroller = config.hasHorizontalScroller
+		horizontalScrollElasticity = config.hasHorizontalScroller ? .automatic : .none
 
 		wantsLayer = true
-		layer?.borderWidth = config.showsBorder ? config.borderWidth : 0
-		layer?.borderColor = config.showsBorder ? config.borderColor.cgColor : nil
+		if layer == nil {
+			layer = CALayer()
+		}
 		layer?.cornerRadius = config.cornerRadius
 		layer?.masksToBounds = true
+		installBorderLayerIfNeeded()
+
+		borderLayer.isHidden = !config.showsBorder
+		borderLayer.lineWidth = config.borderWidth
+		borderLayer.strokeColor = config.borderColor.cgColor
+		borderLayer.fillColor = NSColor.clear.cgColor
+		updateBorderPath()
 
 		setContentHuggingPriority(.required, for: .vertical)
 		setContentCompressionResistancePriority(.required, for: .vertical)
 
 		updateHeight()
+	}
+
+	private func installBorderLayerIfNeeded() {
+		guard let layer else { return }
+		guard borderLayer.superlayer !== layer else { return }
+
+		borderLayer.name = "TokenInputFieldScrollViewBorderLayer"
+		borderLayer.zPosition = 1_000
+		layer.addSublayer(borderLayer)
+	}
+
+	private func updateBorderPath() {
+		guard borderLayer.superlayer != nil else { return }
+
+		borderLayer.frame = bounds
+
+		let inset = max(0, config.borderWidth / 2)
+		let rect = bounds.insetBy(dx: inset, dy: inset)
+		guard rect.width > 0, rect.height > 0 else {
+			borderLayer.path = nil
+			return
+		}
+
+		let radius = max(0, config.cornerRadius - inset)
+		borderLayer.path = CGPath(
+			roundedRect: rect,
+			cornerWidth: radius,
+			cornerHeight: radius,
+			transform: nil
+		)
 	}
 
 	func updateHeight() {
@@ -80,7 +141,17 @@ public final class TokenInputFieldScrollView: NSScrollView {
 		}
 
 		let shouldScroll = measured > maxHeight + 0.5
-		hasVerticalScroller = config.hasVerticalScroller && shouldScroll
+		let allowsVerticalScroll = config.hasVerticalScroller && shouldScroll
+		hasVerticalScroller = allowsVerticalScroll
+		verticalScrollElasticity = allowsVerticalScroll ? .automatic : .none
+
+		if !allowsVerticalScroll {
+			let currentOrigin = contentView.bounds.origin
+			if currentOrigin.y != 0 {
+				contentView.scroll(to: NSPoint(x: currentOrigin.x, y: 0))
+				reflectScrolledClipView(contentView)
+			}
+		}
 
 		if config.growthDirection == .up {
 			let endRange = NSRange(location: textView.string.utf16.count, length: 0)
