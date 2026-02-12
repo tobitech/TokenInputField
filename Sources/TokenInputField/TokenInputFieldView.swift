@@ -336,7 +336,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 		fileprivate let suggestionController = TokenInputSuggestionPanelController()
 
 		fileprivate var isApplyingSwiftUIUpdate = false
-		private var activeSuggestionTrigger: ActiveTrigger?
+		private var activeSuggestionTrigger: TokenInputActiveTrigger?
 		private var lastTriggerEventCharacter: Character?
 
 		init(parent: TokenInputFieldView) {
@@ -541,7 +541,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 			)
 		}
 
-		private func fireDeactivatedEvent(for trigger: ActiveTrigger?) {
+		private func fireDeactivatedEvent(for trigger: TokenInputActiveTrigger?) {
 			guard let trigger else { return }
 			trigger.triggerConfig.onTriggerEvent?(.deactivated)
 		}
@@ -684,78 +684,12 @@ public struct TokenInputFieldView: NSViewRepresentable {
 
 		// MARK: - Trigger detection
 
-		private struct ActiveTrigger {
-			let character: Character
-			let replacementRange: NSRange
-			let anchorRange: NSRange
-			let query: String
-			let triggerConfig: TokenInputTrigger
-		}
-
-		private func activeTrigger(in text: String, selectedRange: NSRange) -> ActiveTrigger? {
-			guard selectedRange.length == 0 else { return nil }
-
-			let nsText = text as NSString
-			let textLength = nsText.length
-			let caretLocation = min(max(0, selectedRange.location), textLength)
-			guard caretLocation > 0 else { return nil }
-
-			// Scan backward from caret to find potential trigger character
-			var tokenStart = caretLocation - 1
-			while tokenStart >= 0 {
-				let value = nsText.character(at: tokenStart)
-				if isWhitespaceOrNewline(value) {
-					tokenStart += 1
-					break
-				}
-
-				if tokenStart == 0 {
-					break
-				}
-				tokenStart -= 1
-			}
-
-			guard tokenStart >= 0, tokenStart < caretLocation else { return nil }
-
-			let markerChar = nsText.character(at: tokenStart)
-			guard let scalar = UnicodeScalar(markerChar) else { return nil }
-			let character = Character(scalar)
-
-			// Find matching trigger from config
-			guard let triggerConfig = parent.config.triggers.first(where: { $0.character == character }) else {
-				return nil
-			}
-
-			// Check leading boundary requirement
-			if triggerConfig.requiresLeadingBoundary {
-				let isAtStart = tokenStart == 0
-				let followsWhitespace = !isAtStart && isWhitespaceOrNewline(nsText.character(at: tokenStart - 1))
-				guard isAtStart || followsWhitespace else { return nil }
-			}
-
-			let replacementRange = NSRange(
-				location: tokenStart,
-				length: caretLocation - tokenStart
+		private func activeTrigger(in text: String, selectedRange: NSRange) -> TokenInputActiveTrigger? {
+			detectTokenInputActiveTrigger(
+				in: text,
+				selectedRange: selectedRange,
+				triggers: parent.config.triggers
 			)
-			let queryRange = NSRange(
-				location: tokenStart + 1,
-				length: max(0, caretLocation - tokenStart - 1)
-			)
-			let query = queryRange.length > 0 ? nsText.substring(with: queryRange) : ""
-			let anchorRange = NSRange(location: caretLocation, length: 0)
-
-			return ActiveTrigger(
-				character: character,
-				replacementRange: replacementRange,
-				anchorRange: anchorRange,
-				query: query,
-				triggerConfig: triggerConfig
-			)
-		}
-
-		private func isWhitespaceOrNewline(_ value: unichar) -> Bool {
-			guard let scalar = UnicodeScalar(value) else { return false }
-			return CharacterSet.whitespacesAndNewlines.contains(scalar)
 		}
 	}
 }

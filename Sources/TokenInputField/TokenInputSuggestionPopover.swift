@@ -112,12 +112,20 @@ private final class TokenInputSuggestionFloatingPanel: NSPanel {
 	}
 
 	private func showOrUpdate() {
-		guard let hostWindow = textView?.window else { return }
+		guard
+			let textView,
+			let hostWindow = textView.window
+		else {
+			return
+		}
 		if panel.parent !== hostWindow {
 			panel.parent?.removeChildWindow(panel)
 			hostWindow.addChildWindow(panel, ordered: .above)
 		}
-		windowObserver.observe(window: hostWindow) { [weak self] in
+		windowObserver.observe(
+			window: hostWindow,
+			clipView: textView.enclosingScrollView?.contentView
+		) { [weak self] in
 			self?.positionPanel()
 		}
 

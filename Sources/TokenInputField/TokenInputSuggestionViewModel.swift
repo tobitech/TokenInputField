@@ -36,7 +36,9 @@ final class TokenInputSuggestionViewModel {
 	) -> Bool {
 		guard lhs.count == rhs.count else { return false }
 		return zip(lhs, rhs).allSatisfy { left, right in
-			left.title == right.title
+			left.id == right.id
+				&& left.imageName == right.imageName
+				&& left.title == right.title
 				&& left.subtitle == right.subtitle
 				&& left.section == right.section
 				&& left.symbolName == right.symbolName

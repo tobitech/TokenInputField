@@ -16,6 +16,10 @@ let package = Package(
 	targets: [
 		.target(
 			name: "TokenInputField"
-		)
+		),
+		.testTarget(
+			name: "TokenInputFieldTests",
+			dependencies: ["TokenInputField"]
+		),
 	]
 )
