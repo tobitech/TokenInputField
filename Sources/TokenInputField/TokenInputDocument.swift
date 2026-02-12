@@ -136,10 +136,7 @@ public extension TokenInputDocument {
 
 	/// Parses a placeholder-backed plain string into a structured document.
 	///
-	/// Supports the unified format `@{kind:uuid|display}` as well as legacy formats:
-	/// - `{{name}}` — editable tokens
-	/// - `@{file:uuid|name}` — standard tokens (file mentions)
-	/// - `@{command:uuid|name}` — standard tokens (commands)
+	/// Supports the unified format `@{kind:uuid|display}`.
 	///
 	/// Unknown or malformed placeholders are preserved as literal text by default.
 	static func importPlaceholders(
@@ -172,26 +169,6 @@ public extension TokenInputDocument {
 		}
 
 		while cursor < string.endIndex {
-			if string[cursor...].hasPrefix("{{") {
-				let payloadStart = string.index(cursor, offsetBy: 2)
-				if let payloadEnd = string.range(of: "}}", range: payloadStart..<string.endIndex)?.lowerBound {
-					let payloadRange = payloadStart..<payloadEnd
-					let placeholderEnd = string.index(payloadEnd, offsetBy: 2)
-					let placeholderRange = cursor..<placeholderEnd
-					let payload = string[payloadRange]
-
-					if let token = variableToken(fromPayload: payload) {
-						flushTextBuffer()
-						segments.append(.token(applyFactory(token)))
-					} else {
-						preserveUnknownPlaceholder(String(string[placeholderRange]))
-					}
-
-					cursor = placeholderEnd
-					continue
-				}
-			}
-
 			if string[cursor...].hasPrefix("@{") {
 				let payloadStart = string.index(cursor, offsetBy: 2)
 				if let payloadEnd = string[payloadStart...].firstIndex(of: "}") {
@@ -234,18 +211,6 @@ public extension TokenInputDocument {
 		return "@{\(encodePlaceholderComponent(token.kind.rawValue)):\(token.id.uuidString)|\(encodePlaceholderComponent(rawName))}"
 	}
 
-	private static func variableToken(fromPayload payload: Substring) -> Token? {
-		guard let decoded = decodePlaceholderComponent(payload) else {
-			return nil
-		}
-
-		return Token(
-			kind: .editable,
-			display: decoded,
-			metadata: ["key": decoded]
-		)
-	}
-
 	private static func typedToken(fromPayload payload: Substring) -> Token? {
 		let parts = payload.split(
 			separator: ":",
@@ -267,41 +232,13 @@ public extension TokenInputDocument {
 			return nil
 		}
 
-		// Map legacy type strings to TokenKind, then fall back to raw decoding.
-		let kind: TokenKind
-		switch type {
-		case "file":
-			kind = .standard
-		case "command":
-			kind = .standard
-		default:
-			if let decoded = TokenKind(rawValue: type) {
-				kind = decoded
-			} else if let decodedType = decodePlaceholderComponent(Substring(type)),
-			          let decodedKind = TokenKind(rawValue: decodedType)
-			{
-				kind = decodedKind
-			} else {
-				kind = .standard
-			}
-		}
-
-		var metadata: [String: String] = [:]
-		// Preserve legacy metadata keys so round-trips through older formats keep useful info.
-		switch type {
-		case "file":
-			metadata["suggestionID"] = id.uuidString
-		case "command":
-			metadata["commandID"] = id.uuidString
-		default:
-			break
-		}
+		guard let kind = TokenKind(rawValue: type) else { return nil }
 
 		return Token(
 			id: id,
 			kind: kind,
 			display: decodedName,
-			metadata: metadata
+			metadata: [:]
 		)
 	}
 

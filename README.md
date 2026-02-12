@@ -422,8 +422,6 @@ let imported = TokenInputDocument.importPlaceholders(
 )
 ```
 
-Legacy placeholder formats (`{{name}}`, `@{file:uuid|name}`, `@{command:uuid|name}`) are supported on import.
-
 ## Token Styling
 
 Each token can carry an optional `TokenStyle`. Tokens without an explicit style fall back to the `defaultTokenStyle` provider, then to built-in defaults.

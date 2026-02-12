@@ -89,7 +89,7 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
       - Expected: token display change reverses and reapplies correctly.
 
 - [x] Step 10 — Serialization (import/export) ✅
-  - Export tokens as placeholders: `{{var}}` and `@{file:uuid|name}`.
+  - Export tokens as placeholders: `@{kind:uuid|display}`.
   - Parse placeholders back into tokens.
   - Decide how to handle unknown tokens. (Preserve unknown/malformed placeholders as literal text by default.)
   - Done when: round-trip persists tokens intact.
