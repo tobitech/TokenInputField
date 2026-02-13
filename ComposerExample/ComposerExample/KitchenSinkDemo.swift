@@ -18,7 +18,7 @@ struct KitchenSinkDemo: View {
 
 			Spacer(minLength: 0)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.visibleLines(min: 1, max: 10)
 				.growthDirection(.up)

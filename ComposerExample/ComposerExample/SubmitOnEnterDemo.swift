@@ -27,7 +27,7 @@ struct SubmitOnEnterDemo: View {
 
 			Divider()
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.visibleLines(min: 1, max: 5)
 				.growthDirection(.up)

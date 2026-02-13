@@ -61,7 +61,7 @@ struct ContentView: View {
     @State private var state = TokenInputFieldState()
 
     var body: some View {
-        TokenInputFieldView(state: $state)
+        TokenInputField(state: $state)
             .placeholder("Describe a task or ask anything")
             .composerBorder(hidden: true)
             .fixedSize(horizontal: false, vertical: true)
@@ -74,7 +74,7 @@ struct ContentView: View {
 ## Styling
 
 ```swift
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .composerFont(.monospacedSystemFont(ofSize: 14, weight: .regular))
     .textColor(.white)
     .backgroundColor(NSColor(red: 0.13, green: 0.13, blue: 0.15, alpha: 1))
@@ -133,7 +133,7 @@ Token(
 Enable Tab navigation and auto-focus:
 
 ```swift
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .editableTokenTabNavigation(true)
     .autoFocusFirstEditableToken(true)
     .defaultTokenStyle { kind in
@@ -160,7 +160,7 @@ Token(
 ```
 
 ```swift
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .onTokenDismissed { token in
         print("Dismissed: \(token.display)")
     }
@@ -179,7 +179,7 @@ Token(
 ```
 
 ```swift
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .onPickableTokenClicked { token, setValue in
         let key = token.metadata["key"] ?? ""
         switch key {
@@ -199,7 +199,7 @@ TokenInputFieldView(state: $state)
 Register trigger characters to activate the suggestion panel. Each call to `.trigger()` registers one character:
 
 ```swift
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .trigger("@", isCompact: true,
         suggestionsProvider: { ctx in
             // Return suggestions matching ctx.query
@@ -294,7 +294,7 @@ Disable the built-in panel and handle trigger events yourself:
 @State private var triggerContext: TriggerContext?
 @State private var suggestions: [TokenInputSuggestion] = []
 
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .actionHandler(handler)
     .trigger("#", isCompact: true, showsBuiltInPanel: false,
         suggestionsProvider: { ctx in
@@ -341,7 +341,7 @@ Control the floating panel dimensions globally or per-trigger:
 
 ```swift
 // Global default
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .defaultPanelSizing(TokenInputSuggestionPanelSizing(
         standardWidth: 415,
         standardMaxHeight: 275,
@@ -471,7 +471,7 @@ Token(kind: .standard, display: "GitHub", style: TokenStyle(imageName: "github")
 Set a global fallback for tokens without an explicit style:
 
 ```swift
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .defaultTokenStyle { kind in
         switch kind {
         case .editable: return .editable
@@ -486,7 +486,7 @@ TokenInputFieldView(state: $state)
 Enable Return-to-submit. Shift+Enter inserts a newline instead.
 
 ```swift
-TokenInputFieldView(state: $state)
+TokenInputField(state: $state)
     .visibleLines(min: 1, max: 5)
     .growthDirection(.up)
     .onSubmit {
@@ -510,7 +510,7 @@ Calling `.onSubmit` implicitly enables `submitsOnEnter`. To toggle it independen
 
 | Type | Description |
 |------|-------------|
-| `TokenInputFieldView` | SwiftUI view (`NSViewRepresentable`) — the main entry point |
+| `TokenInputField` | SwiftUI view (`NSViewRepresentable`) — the main entry point |
 | `TokenInputFieldState` | Editor state: `attributedText` + `selectedRange` |
 | `Token` | Token model: `id`, `kind`, `display`, `style`, `metadata` |
 | `TokenKind` | `.standard`, `.editable`, `.dismissible`, `.pickable` |

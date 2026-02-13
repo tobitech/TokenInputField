@@ -26,7 +26,7 @@ struct ToolsFieldDemo: View {
 				.foregroundStyle(.secondary)
 
 			VStack(spacing: 0) {
-				TokenInputFieldView(state: $state)
+				TokenInputField(state: $state)
 					.placeholder("Ask another question...")
 					.composerFont(.systemFont(ofSize: 15, weight: .regular))
 					.composerBorder(hidden: true)

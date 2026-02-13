@@ -13,7 +13,7 @@ struct EditableTokensDemo: View {
 			Text("Click a token to edit it. **Tab** / **Shift+Tab** to navigate between tokens.")
 				.foregroundStyle(.secondary)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.visibleLines(min: 3, max: 10)
 				.editableTokenTabNavigation(true)

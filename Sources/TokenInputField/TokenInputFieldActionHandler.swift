@@ -8,7 +8,7 @@ import AppKit
 /// ```swift
 /// @State private var handler = TokenInputFieldActionHandler()
 ///
-/// TokenInputFieldView(state: $state)
+/// TokenInputField(state: $state)
 ///     .actionHandler(handler)
 ///     .trigger("#", showsBuiltInPanel: false, ...) { event in
 ///         // capture TriggerContext from event

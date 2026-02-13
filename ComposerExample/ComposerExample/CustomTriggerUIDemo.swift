@@ -13,7 +13,7 @@ struct CustomTriggerUIDemo: View {
 			Text("Type **#** to open a custom suggestion list. The built-in panel is disabled — selections commit via `ActionHandler`.")
 				.foregroundStyle(.secondary)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.visibleLines(min: 2, max: 8)
 				.actionHandler(handler)

@@ -9,7 +9,7 @@ struct TriggersDemo: View {
 			Text("Type **@** for file mentions (compact) or **/** for slash commands (standard).")
 				.foregroundStyle(.secondary)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.visibleLines(min: 2, max: 10)
 				// @ trigger — file mentions (compact rows)

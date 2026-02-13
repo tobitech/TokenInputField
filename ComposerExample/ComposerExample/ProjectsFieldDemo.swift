@@ -47,7 +47,7 @@ struct ProjectsFieldDemo: View {
 				Text("If you want an automation to run on a specific branch, you can specify it in your prompt.")
 					.foregroundStyle(.secondary)
 
-				TokenInputFieldView(state: $state)
+				TokenInputField(state: $state)
 					.composerFont(.systemFont(ofSize: 15, weight: .regular))
 					.composerBorder(color: .separatorColor, width: 1, cornerRadius: 12)
 					.textInsets(NSSize(width: 12, height: 10))

@@ -50,7 +50,7 @@ struct PickableTokensDemo: View {
 			Text("Click a token to pick a value. **Priority** shows an NSMenu; **File** opens an NSOpenPanel.")
 				.foregroundStyle(.secondary)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Enter a task description")
 				.visibleLines(min: 3, max: 10)
 				.editableTokenTabNavigation(true)

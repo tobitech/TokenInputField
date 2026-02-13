@@ -93,7 +93,7 @@ struct PromptFieldDemo: View {
 			Text(title)
 				.font(.headline)
 
-			TokenInputFieldView(state: state)
+			TokenInputField(state: state)
 				.placeholder(placeholder)
 				.composerFont(.systemFont(ofSize: 15, weight: .regular))
 				.composerBorder(color: .separatorColor, width: 1, cornerRadius: 12)

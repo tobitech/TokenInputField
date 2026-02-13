@@ -5,7 +5,7 @@ Goal: Build a high-performance, fully-editable macOS prompt composer (NSTextView
 ## Phase 0 — Baseline wrapper + TextKit 2 setup
 
 - [x] Step 1 — SwiftUI wrapper (NSViewRepresentable) ✅
-  - Build `TokenInputFieldView` and `TokenInputFieldScrollView`.
+  - Build `TokenInputField` and `TokenInputFieldScrollView`.
   - Host `TokenInputFieldTextView` inside the scroll view.
   - Bridge selection and text changes through a Coordinator.
   - Done when: view shows, accepts text input, and pushes updates to SwiftUI state.

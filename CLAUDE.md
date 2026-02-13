@@ -40,7 +40,7 @@ No formatter or linter is configured. Follow Xcode defaults and match adjacent c
 ### Layer separation
 
 1. **AppKit core** — `TokenInputFieldTextView` (NSTextView + TextKit 2) handles all text editing, token attachment rendering, keyboard interception, and suggestion anchoring. Performance-critical work lives here.
-2. **SwiftUI wrapper** — `TokenInputFieldView` (NSViewRepresentable) is a thin bridge. The `Coordinator` (NSTextViewDelegate) syncs AppKit state with `@Binding<TokenInputFieldState>`, using an `isApplyingSwiftUIUpdate` flag to prevent feedback loops.
+2. **SwiftUI wrapper** — `TokenInputField` (NSViewRepresentable) is a thin bridge. The `Coordinator` (NSTextViewDelegate) syncs AppKit state with `@Binding<TokenInputFieldState>`, using an `isApplyingSwiftUIUpdate` flag to prevent feedback loops.
 3. **Configuration** — `TokenInputFieldConfig` is a struct with styling, behavior flags, and closure callbacks (`onSubmit`, `suggestFiles`, `suggestionsProvider`, `onSuggestionSelected`, `onCommandExecuted`). No delegation protocol; behavior is injected via closures.
 4. **Document model** — `TokenInputDocument` = `[Segment]` where `Segment` = `.text(String)` | `.token(Token)`. Tokens have `kind` (`.variable`, `.fileMention`, `.command`), `display`, and `metadata`. Serializes to/from placeholder strings: `{{var}}`, `@{file:uuid|name}`, `@{command:uuid|name}`.
 
@@ -75,7 +75,7 @@ TokenInputField/                         (repo root)
 
 | File | Role |
 |------|------|
-| `Sources/TokenInputField/TokenInputFieldView.swift` | SwiftUI wrapper + Coordinator (delegate, suggestion trigger detection, token insertion) |
+| `Sources/TokenInputField/TokenInputField.swift` | SwiftUI wrapper + Coordinator (delegate, suggestion trigger detection, token insertion) |
 | `Sources/TokenInputField/TokenInputFieldTextView.swift` | Core AppKit text editor |
 | `Sources/TokenInputField/TokenInputFieldConfig.swift` | Configuration struct + `TokenInputCommand` model |
 | `Sources/TokenInputField/TokenInputDocument.swift` | Document model + placeholder serialization |

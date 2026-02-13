@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// This is the reusable surface you'll embed across screens.
 @MainActor
-public struct TokenInputFieldView: NSViewRepresentable {
+public struct TokenInputField: NSViewRepresentable {
 
 	public typealias NSViewType = TokenInputFieldScrollView
 
@@ -330,7 +330,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 	// MARK: - Coordinator
 
 	@MainActor public final class Coordinator: NSObject, NSTextViewDelegate {
-		fileprivate let parent: TokenInputFieldView
+		fileprivate let parent: TokenInputField
 		fileprivate weak var textView: TokenInputFieldTextView?
 		fileprivate weak var scrollView: TokenInputFieldScrollView?
 		fileprivate let suggestionController = TokenInputSuggestionPanelController()
@@ -339,7 +339,7 @@ public struct TokenInputFieldView: NSViewRepresentable {
 		private var activeSuggestionTrigger: TokenInputActiveTrigger?
 		private var lastTriggerEventCharacter: Character?
 
-		init(parent: TokenInputFieldView) {
+		init(parent: TokenInputField) {
 			self.parent = parent
 			super.init()
 			suggestionController.onSelectSuggestion = { [weak self] suggestion in

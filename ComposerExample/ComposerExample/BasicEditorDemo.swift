@@ -9,7 +9,7 @@ struct BasicEditorDemo: View {
 			Text("The simplest possible setup — just a state binding.")
 				.foregroundStyle(.secondary)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.composerBorder(hidden: true)
 				.fixedSize(horizontal: false, vertical: true)

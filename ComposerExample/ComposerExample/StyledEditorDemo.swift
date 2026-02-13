@@ -10,7 +10,7 @@ struct StyledEditorDemo: View {
 			Text("Custom font, colors, border, and text insets.")
 				.foregroundStyle(.secondary)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.composerFont(.monospacedSystemFont(ofSize: 14, weight: .regular))
 				.textColor(.white)
@@ -20,7 +20,7 @@ struct StyledEditorDemo: View {
 				.visibleLines(min: 3, max: 12)
 				.fixedSize(horizontal: false, vertical: true)
 
-			TokenInputFieldView(state: $state)
+			TokenInputField(state: $state)
 				.placeholder("Describe a task or ask anything")
 				.composerFont(.systemFont(ofSize: 16, weight: .light))
 				.textColor(.systemIndigo)
