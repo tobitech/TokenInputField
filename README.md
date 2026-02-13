@@ -2,6 +2,16 @@
 
 A native macOS token input editor built with AppKit (TextKit 2) and wrapped for SwiftUI. Supports inline tokens, a floating suggestion panel, editable variable tokens, and a structured document model.
 
+## Screenshots
+
+| Inline Tokens | Suggestion Panel |
+|:---:|:---:|
+| ![Inline tokens with icons](Assets/inline-tokens.png) | ![Floating suggestion panel](Assets/suggestion-panel.png) |
+
+| Editable Tokens | Prompt Field |
+|:---:|:---:|
+| ![Click-to-edit variable tokens](Assets/editable-tokens.png) | ![Pre-filled styled token pills](Assets/prompt-field.png) |
+
 ## Features
 
 - **Inline tokens** rendered as pill-shaped attachments — atomic selection, backspace-to-delete, arrow-key skip
